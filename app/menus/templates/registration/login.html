@@ -13,3 +13,7 @@
   <p class="small">Vous restez connecté un an sur cet appareil.</p>
 </div>
 {% endblock %}
+{% block scripts %}<script>
+// Après une déconnexion, on efface les copies hors connexion gardées sur ce téléphone.
+if ("caches" in window) caches.keys().then(noms => noms.filter(n => n.startsWith("menus-")).forEach(n => caches.delete(n)));
+</script>{% endblock %}

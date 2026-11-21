@@ -5,6 +5,7 @@ from . import mcp, oauth, views
 urlpatterns = [
     path("", views.accueil, name="accueil"),
     path("sante/", views.sante, name="sante"),
+    path("sw.js", views.service_worker, name="service_worker"),
     path("jour/<str:date>/", views.jour, name="jour"),
     path("jour/<str:date>/remarque/", views.jour_remarque, name="jour_remarque"),
     path("petit-dej/", views.petit_dej, name="petit_dej"),

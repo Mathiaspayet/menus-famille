@@ -47,6 +47,9 @@ rattache par l'étiquette `com.centurylinklabs.watchtower.scope=gestion-locative
 - Serveur MCP : les descriptions d'outils et les `INSTRUCTIONS` (`mcp.py`) restent
   génériques (dépôt public) ; les données familiales viennent de la base. Tout nouvel
   outil va dans `mcp_outils.py` avec son test dans `tests.py` (classe `McpTests`).
+- Hors connexion : `sw.js` ne doit jamais garder en copie `/mcp`, `/oauth/`, `/admin/`,
+  `/connexion/`… (liste `JAMAIS`). Une nouvelle page qui modifie des données doit
+  rester accessible uniquement en ligne.
 - La version affichée en bas des pages vient de `BUILD_VERSION` / `BUILD_DATE`
   (passées par GitHub Actions au build) : elle permet de vérifier que Watchtower a
   bien déployé la dernière version.
@@ -74,6 +77,9 @@ app/menus/
                    + ClientOAuth, CodeOAuth, JetonOAuth (connexion de Claude)
   plan_io.py       import / export JSON du plan (cœur de la logique)
   views.py         écrans ; courses.js = cases cochées + relecture toutes les 8 s
+  static/menus/appli.js   commun : service worker, file d'attente hors connexion,
+                   copies à l'avance, bandeau « Installer l'appli »
+  templates/menus/sw.js   service worker servi à /sw.js (cache nommé selon BUILD_VERSION)
   mcp.py           serveur MCP (/mcp, JSON-RPC, sans session, réponses JSON)
   mcp_outils.py    les outils proposés à Claude (lire_jour, modifier_jour,
                    enregistrer_semaine, enregistrer_recettes, …)

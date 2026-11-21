@@ -6,6 +6,8 @@ Petite appli web auto-hébergée (Synology + Docker) pour une famille de 4 :
 - **Courses** : listes par magasin (boucher, primeur, Leclerc). **Les cases cochées sont enregistrées sur le NAS et partagées** :
   si l'un fait le primeur lundi, l'autre voit ce qui reste à acheter mardi.
 - **Frigo** : on note ce qui reste, pour que Claude en tienne compte.
+- **Appli installable, utilisable sans réseau** : icône sur l'écran d'accueil (iPhone et Android) ; au
+  supermarché sans réseau, la liste reste affichée et les cases cochées partent au retour de la connexion.
 - **Modifier avec Claude** : un bouton ouvre Claude avec la question pré-remplie.
 - **Connecteur Claude (MCP)** : Claude lit et modifie directement les menus, les courses et le frigo
   depuis l'app Claude ([mode d'emploi](docs/MCP.md)).

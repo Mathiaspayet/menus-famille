@@ -29,6 +29,15 @@ def lien_claude(question):
     return "https://claude.ai/new?q=" + quote(question)
 
 
+def service_worker(request):
+    """Le service worker doit être servi à la racine pour couvrir toute l'appli."""
+    reponse = render(request, "menus/sw.js", {"version": settings.BUILD_VERSION[:12]},
+                     content_type="application/javascript; charset=utf-8")
+    reponse["Cache-Control"] = "no-cache"
+    reponse["Service-Worker-Allowed"] = "/"
+    return reponse
+
+
 def sante(request):
     """Sonde pour le healthcheck Docker (pas de connexion requise)."""
     return HttpResponse("ok", content_type="text/plain")

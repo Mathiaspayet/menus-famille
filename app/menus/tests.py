@@ -422,3 +422,30 @@ class McpConstruirePlanTests(TestCase):
         self.outil(jeton, "supprimer_liste_courses", date_courses="2026-11-16")
         self.assertFalse(ListeCourses.objects.exists())
         self.assertFalse(Article.objects.exists())
+
+
+class AppliInstallableTests(TestCase):
+    def test_service_worker_a_la_racine(self):
+        with self.settings(BUILD_VERSION="0123456789abcdef"):
+            r = self.client.get("/sw.js")
+        self.assertEqual(r.status_code, 200)
+        self.assertTrue(r["Content-Type"].startswith("application/javascript"))
+        self.assertEqual(r["Service-Worker-Allowed"], "/")
+        self.assertContains(r, 'const CACHE = "menus-0123456789ab";')
+
+    def test_manifeste_et_icones_pour_android(self):
+        from django.contrib.staticfiles import finders
+        manifeste = json.load(open(finders.find("menus/manifest.webmanifest"), encoding="utf-8"))
+        tailles = {i["sizes"] for i in manifeste["icons"]}
+        self.assertTrue({"192x192", "512x512"} <= tailles)
+        self.assertTrue(any(i.get("purpose") == "maskable" for i in manifeste["icons"]))
+        for icone in manifeste["icons"]:
+            self.assertIsNotNone(finders.find("menus/" + icone["src"]), icone["src"])
+
+    def test_pages_chargent_le_script_commun(self):
+        u = User.objects.create_user("parent1", password="motdepasse-test")
+        self.client.force_login(u)
+        importer_plan(copy.deepcopy(PLAN))
+        r = self.client.get("/courses/")
+        self.assertContains(r, "menus/appli.js")
+        self.assertLess(r.content.index(b"menus/appli.js"), r.content.index(b"menus/courses.js"))

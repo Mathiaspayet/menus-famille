@@ -145,5 +145,9 @@ input[type=text],input[type=password],input[type=file],textarea{font:inherit;wid
 .msg.error{border-left-color:var(--warn);background:var(--warnbg);color:var(--warn)}
 .sync{font-size:.75rem;color:var(--muted);text-align:right;margin:6px 0 0}
 .login{max-width:360px;margin:40px auto}
+.sync.alerte{position:sticky;bottom:8px;z-index:3;background:var(--warnbg);color:var(--warn);font-weight:700;text-align:center;border-radius:10px;padding:8px 10px;margin:10px 0 0;box-shadow:0 2px 8px rgba(0,0,0,.12)}
+.installer{display:flex;flex-wrap:wrap;align-items:center;gap:8px 10px;background:var(--soft);border-left:4px solid var(--pine);border-radius:10px;padding:10px 12px;margin-bottom:12px;font-size:.9rem}
+.installer span{flex:1 1 220px}
+.installer .btn{padding:6px 14px}
 .version{max-width:760px;margin:28px auto 0;padding:0 16px;font-size:.75rem;color:var(--muted);text-align:center}
 @media (max-width:420px){ nav.tabs a{font-size:.75rem;padding:9px 2px} }

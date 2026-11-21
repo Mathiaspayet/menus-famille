@@ -64,8 +64,14 @@ Deux possibilités, comme pour la gestion locative :
   `DJANGO_CSRF_TRUSTED_ORIGINS=https://menus.ton-domaine.fr` et `DJANGO_HTTPS=True`.
   Ce mode sera nécessaire pour l'étape MCP (Claude doit pouvoir joindre l'appli).
 
-Sur le téléphone : ouvrir l'adresse, puis **Partager → Sur l'écran d'accueil** (iPhone)
-ou **⋮ → Ajouter à l'écran d'accueil** (Android). L'appli s'ouvre alors comme une vraie appli.
+Sur le téléphone : ouvrir l'adresse **en HTTPS**, puis **Partager → Sur l'écran d'accueil** (iPhone, dans
+Safari) ou **Installer** dans le bandeau proposé par l'appli (Android, dans Chrome ; sinon **⋮ → Installer
+l'appli**). L'appli s'ouvre alors comme une vraie appli.
+
+**Sans réseau** (au fond du supermarché…) : les pages déjà ouvertes sur le téléphone restent consultables,
+ainsi que les autres magasins de la liste et les autres jours de la semaine. Les cases cochées restent cochées
+et sont envoyées au NAS dès le retour du réseau (message orange en bas de l'écran tant qu'il en reste).
+Le mode hors connexion ne fonctionne qu'en HTTPS (pas avec l'adresse `http://IP:8010`).
 
 ## 7. Connecter Claude (facultatif)
 
