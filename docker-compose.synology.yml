@@ -6,7 +6,8 @@
 # 3. Container Manager > Projet > Créer > dossier ci-dessus
 #
 # L'image est construite par GitHub Actions à chaque push sur main,
-# puis Watchtower la met à jour automatiquement sur le NAS.
+# puis le Watchtower déjà installé sur le NAS (projet gestion-locative)
+# la met à jour automatiquement. Aucun Watchtower à ajouter ici.
 # ============================================================
 
 services:
@@ -24,18 +25,8 @@ services:
       # elle survit aux mises à jour. À inclure dans Hyper Backup.
       - /volume1/docker/menus-famille/data:/app/data
     labels:
-      - "com.centurylinklabs.watchtower.scope=menus-famille"
-
-  # Watchtower dédié : ne surveille que les conteneurs du scope « menus-famille »
-  watchtower-menus:
-    image: containrrr/watchtower
-    container_name: watchtower_menus
-    restart: unless-stopped
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-    environment:
-      WATCHTOWER_POLL_INTERVAL: 300
-      WATCHTOWER_CLEANUP: "true"
-      WATCHTOWER_SCOPE: "menus-famille"
-    labels:
-      - "com.centurylinklabs.watchtower.scope=menus-famille"
+      # Portée du Watchtower déjà en place sur le NAS (celui du projet
+      # gestion-locative, qui suit aussi immo et suivi-prix-essence).
+      # Ne pas la changer : c'est ce qui fait que ce conteneur est mis à jour
+      # automatiquement, sans lancer un second Watchtower.
+      - "com.centurylinklabs.watchtower.scope=gestion-locative"

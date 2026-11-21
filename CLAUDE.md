@@ -21,12 +21,16 @@ Elle tourne dans Docker sur un NAS Synology DS218+ (x86_64).
   Claude Code            GitHub                          NAS Synology
   ┌──────────┐  push   ┌───────────────────┐  pull     ┌────────────────────┐
   │ ce dépôt │ ──────► │ Actions : tests   │ ────────► │ menus_famille :8010│
-  └──────────┘         │ puis image ghcr.io│           │ + watchtower_menus │
+  └──────────┘         │ puis image ghcr.io│           │ + watchtower (*)   │
                        └───────────────────┘           └────────────────────┘
 ```
 
 Chaque push sur `main` : tests, puis image `ghcr.io/mathiaspayet/menus-famille:latest`.
-Watchtower (scope `menus-famille`) la déploie tout seul en ~5 min.
+(*) Il n'y a **qu'un seul Watchtower sur le NAS** : le conteneur `watchtower` du
+projet gestion-locative (`WATCHTOWER_SCOPE=gestion-locative`). Ce projet s'y
+rattache par l'étiquette `com.centurylinklabs.watchtower.scope=gestion-locative`
+(comme immo et suivi-prix-essence) et le déploie tout seul en ~5 min.
+**Ne jamais ajouter de second Watchtower** dans `docker-compose.synology.yml`.
 
 ## 2. Règles importantes
 

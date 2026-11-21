@@ -1,7 +1,8 @@
 # Installer Menus famille sur le Synology
 
 Même principe que la gestion locative : GitHub fabrique l'image, le NAS la télécharge,
-Watchtower la tient à jour. Compter 20 minutes.
+et le **Watchtower déjà installé** (celui de la gestion locative) la tient à jour.
+Il n'y a pas de second Watchtower à installer. Compter 20 minutes.
 
 ## 1. Vérifier que l'image existe sur GitHub
 
@@ -38,7 +39,10 @@ sudo vi .env
 
 1. **Container Manager** → **Projet** → **Créer**.
 2. Nom : `menus-famille`, chemin : `/volume1/docker/menus-famille`, « Utiliser le docker-compose.yml existant ».
-3. Suivant → Terminé. Deux conteneurs démarrent : `menus_famille` et `watchtower_menus`.
+3. Suivant → Terminé. Un seul conteneur démarre : `menus_famille`.
+   Les mises à jour sont assurées par le conteneur `watchtower` déjà présent
+   (projet gestion-locative), grâce à l'étiquette
+   `com.centurylinklabs.watchtower.scope=gestion-locative`.
 4. Ouvre `http://IP-DU-NAS:8010` et connecte-toi.
 
 ## 5. Importer le plan et créer le deuxième compte
@@ -72,4 +76,6 @@ Ajoute `/volume1/docker/menus-famille/data` à ta tâche **Hyper Backup** : c'es
 - **Page « Bad Request (400) »** : l'adresse utilisée n'est pas dans `DJANGO_ALLOWED_HOSTS`.
 - **« CSRF verification failed » en HTTPS** : vérifier `DJANGO_CSRF_TRUSTED_ORIGINS`.
 - **Les logs** : Container Manager → Conteneur → `menus_famille` → Journal.
+- **L'appli ne se met pas à jour** : regarder le journal du conteneur `watchtower`
+  (celui de la gestion locative) et vérifier que l'image GitHub est bien publique.
 - **Après une modification du `.env`** : Projet → `menus-famille` → Arrêter puis Démarrer.
