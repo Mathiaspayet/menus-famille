@@ -101,12 +101,16 @@ class EcransTests(TestCase):
         r = self.client.get("/jour/2026-11-16/")
         self.assertContains(r, "https://claude.ai/new?q=")
         self.assertNotContains(r, "data-copier")
-        with self.settings(CLAUDE_PROJECT_URL="https://claude.ai/project/essai"):
+        uuid = "0193a1b2-c3d4-7e5f-8a9b-0c1d2e3f4a5b"
+        with self.settings(CLAUDE_PROJECT_URL=f"https://claude.ai/project/{uuid}"):
             r = self.client.get("/jour/2026-11-16/")
-            self.assertContains(r, 'href="https://claude.ai/project/essai"')
+            self.assertContains(r, f'href="https://claude.ai/new?project={uuid}&amp;q=Menus%20famille')
             self.assertContains(r, 'data-copier="Menus famille — Lundi 16 nov')
             self.assertContains(r, "menus/claude.js")
             self.assertContains(self.client.get("/frigo/"), "data-copier=")
+        # adresse sans identifiant de projet : on ouvre simplement l'adresse donnée
+        with self.settings(CLAUDE_PROJECT_URL="https://claude.ai/projects"):
+            self.assertContains(self.client.get("/jour/2026-11-16/"), 'href="https://claude.ai/projects"')
 
     def test_cocher_partage_entre_deux_personnes(self):
         a = Article.objects.get(nom="Pommes")

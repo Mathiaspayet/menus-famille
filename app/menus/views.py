@@ -1,6 +1,7 @@
 """Écrans de l'appli. Toutes les pages demandent d'être connecté, sauf /sante/."""
 import datetime
 import json
+import re
 from urllib.parse import quote
 
 from django.conf import settings
@@ -25,13 +26,17 @@ CONSEILS = {
 def lien_claude(question):
     """Bouton « Modifier avec Claude ».
 
-    - Projet Claude configuré (CLAUDE_PROJECT_URL) : le bouton ouvre le projet,
-      où se trouvent les consignes ; le texte de la question est copié dans le
-      presse-papiers (claude.js) pour être collé dans une nouvelle conversation.
-    - Sinon : nouvelle conversation avec la question pré-remplie.
+    - Projet Claude configuré (CLAUDE_PROJECT_URL, adresse du projet copiée
+      depuis claude.ai) : nouvelle conversation DANS le projet, question
+      pré-remplie (paramètre « project » de claude.ai/new, non documenté).
+      En secours, claude.js copie aussi la question dans le presse-papiers.
+    - Sinon : nouvelle conversation simple avec la question pré-remplie.
     """
-    if settings.CLAUDE_PROJECT_URL:
-        return {"url": settings.CLAUDE_PROJECT_URL, "question": question, "projet": True}
+    projet = settings.CLAUDE_PROJECT_URL
+    if projet:
+        m = re.search(r"/project/([0-9a-fA-F-]{36})", projet)
+        url = (f"https://claude.ai/new?project={m.group(1)}&q={quote(question)}" if m else projet)
+        return {"url": url, "question": question, "projet": True}
     return {"url": "https://claude.ai/new?q=" + quote(question), "question": question, "projet": False}
 
 

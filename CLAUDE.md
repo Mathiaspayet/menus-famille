@@ -98,5 +98,7 @@ GUIDE_INSTALLATION_NAS.md
    de coût en plus de son abonnement).
 3. ✅ Projet Claude « Menus famille » : les consignes de méthode sont dans le
    projet (sur claude.ai), les règles de fond dans l'onglet Infos (base du NAS),
-   avec un « Journal des décisions ». Le bouton « Modifier avec Claude » ouvre le
-   projet (`CLAUDE_PROJECT_URL`) après avoir copié le contexte (`claude.js`).
+   avec un « Journal des décisions ». Le bouton « Modifier avec Claude » ouvre une
+   nouvelle conversation dans le projet : `claude.ai/new?project=<uuid>&q=…`
+   (paramètre non documenté ; uuid tiré de `CLAUDE_PROJECT_URL`). En secours,
+   `claude.js` copie aussi la question dans le presse-papiers.
