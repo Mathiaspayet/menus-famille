@@ -352,7 +352,7 @@ _RECETTE = {"type": "object", "properties": {
     "titre": TEXTE, "duree": {"type": "string", "description": "Ex. 25 min"},
     "ingredients": LISTE_TEXTES, "etapes": LISTE_TEXTES,
     "portions": {"type": "array", "items": LISTE_TEXTES,
-                 "description": "Une ligne par aliment : [aliment, part de la 1re personne, part de la 2e, ...]"},
+                 "description": "Une ligne par aliment : [aliment, part de la 1re personne, part de la 2e, ...]. Pour que l'appli additionne les parts des présents : viandes et féculents en deux lignes, « Porc cru » puis « Porc cuit (≈) » ; parts des boîtes du lendemain sur des lignes « Boîte de demain : porc cru ». Valeurs simples : « 120 g », « 1 pavé », « ⅗ de pavé »."},
     "dessert": TEXTE, "note": TEXTE, "feu": {"type": "string", "description": "Pot du feu (piment à table)"},
     "boites": {"type": "boolean", "description": "Cuisiner 2 parts de plus pour les boîtes du lendemain"},
     "boite_prep": {"type": "boolean", "description": "Recette de boîte préparée la veille"}},

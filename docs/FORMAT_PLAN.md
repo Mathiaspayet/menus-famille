@@ -37,6 +37,14 @@ même format**. Vous pouvez lui coller cette page pour qu'il connaisse les règl
 }
 ```
 
+Portions et « Qui mange ? » : sur la page du jour, on peut retirer une personne
+(ou les boîtes du lendemain) ; la colonne « Total » additionne alors les parts des
+présents. Pour en profiter, écrire viandes et féculents en deux lignes
+(`"Porc cru"`, `"Porc cuit (≈)"`) et les parts des boîtes sur des lignes
+`"Boîte de demain : porc cru"` : l'appli affiche aussi « À peser (cru) », la somme
+des lignes crues de la même denrée. Valeurs additionnables : `"120 g"`, `"400 ml"`,
+`"1 pavé"`, `"⅗ de pavé"`, `"1½"` ; une case vide compte pour zéro.
+
 ## Jour
 
 ```json

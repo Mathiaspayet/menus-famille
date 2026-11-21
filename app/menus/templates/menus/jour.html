@@ -1,4 +1,4 @@
-{% extends "menus/base.html" %}
+{% extends "menus/base.html" %}{% load static %}
 {% block titre %}{{ j.libelle }} · Menus{% endblock %}
 {% block contenu %}
 <div class="weeks" aria-label="Semaines">
@@ -9,6 +9,17 @@
 </div>
 
 <h2>{{ j.libelle }}</h2>
+
+{% if personnes %}
+<div class="qui" id="qui-mange" data-jour="{{ j.date|date:'Y-m-d' }}">
+  <span class="qui-titre">Qui mange ?</span>
+  <div class="qui-choix">
+    {% for p in personnes %}<button type="button" class="chip" data-p="{{ forloop.counter0 }}" aria-pressed="true">{{ p }}</button>{% endfor %}
+    <button type="button" class="chip chip-boite" data-boites aria-pressed="true">Boîtes de demain</button>
+  </div>
+  <p class="qui-aide">Touchez un prénom pour le retirer : les tableaux n'affichent plus sa part, et la colonne « Total » donne les quantités pour les présents.</p>
+</div>
+{% endif %}
 
 {% if j.remarque %}<div class="remarque"><b>Remarque :</b> {{ j.remarque|linebreaksbr }}</div>{% endif %}
 
@@ -57,3 +68,5 @@
   </form></div>
 </details>
 {% endblock %}
+
+{% block scripts %}<script src="{% static 'menus/portions.js' %}"></script>{% endblock %}
