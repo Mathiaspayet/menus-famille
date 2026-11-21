@@ -15,6 +15,7 @@ Le dépôt ne contient **aucune donnée familiale** : le plan est importé depui
 
 | Élément | Rôle |
 |---|---|
+| `CLAUDE.md` | Contexte du projet pour Claude Code (ports du NAS, règles, feuille de route). |
 | `app/` | Le projet Django (Python). `menus/models.py` décrit les données, `menus/views.py` les écrans. |
 | SQLite | La base, un simple fichier dans `/volume1/docker/menus-famille/data`. |
 | `Dockerfile` | La recette pour fabriquer l'image (l'appli prête à tourner). |
