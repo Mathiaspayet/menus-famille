@@ -1,7 +1,7 @@
 """Administration : corrections à la main et gestion des comptes (/admin/)."""
 from django.contrib import admin
 
-from .models import Article, Jour, ListeCourses, PetitDej, Plan, Recette, ResteFrigo
+from .models import Article, ClientOAuth, Jour, JetonOAuth, ListeCourses, PetitDej, Plan, Recette, ResteFrigo
 
 
 @admin.register(Recette)
@@ -36,3 +36,23 @@ class ResteFrigoAdmin(admin.ModelAdmin):
 
 admin.site.register(PetitDej)
 admin.site.register(Plan)
+
+
+@admin.register(JetonOAuth)
+class JetonOAuthAdmin(admin.ModelAdmin):
+    """Supprimer une ligne déconnecte Claude de ce compte (il faudra le reconnecter)."""
+    list_display = ("utilisateur", "client", "cree_le", "utilise_le", "rafraichissement_expire_le")
+    fields = ("utilisateur", "client", "cree_le", "utilise_le", "rafraichissement_expire_le")
+    readonly_fields = fields
+
+    def has_add_permission(self, request):
+        return False
+
+
+@admin.register(ClientOAuth)
+class ClientOAuthAdmin(admin.ModelAdmin):
+    list_display = ("nom", "client_id", "cree_le")
+    readonly_fields = ("nom", "client_id", "redirect_uris", "cree_le")
+
+    def has_add_permission(self, request):
+        return False

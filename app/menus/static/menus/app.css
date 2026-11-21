@@ -145,4 +145,5 @@ input[type=text],input[type=password],input[type=file],textarea{font:inherit;wid
 .msg.error{border-left-color:var(--warn);background:var(--warnbg);color:var(--warn)}
 .sync{font-size:.75rem;color:var(--muted);text-align:right;margin:6px 0 0}
 .login{max-width:360px;margin:40px auto}
+.version{max-width:760px;margin:28px auto 0;padding:0 16px;font-size:.75rem;color:var(--muted);text-align:center}
 @media (max-width:420px){ nav.tabs a{font-size:.75rem;padding:9px 2px} }

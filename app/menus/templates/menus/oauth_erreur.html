@@ -1,0 +1,9 @@
+{% extends "menus/base.html" %}
+{% block titre %}Connexion de Claude · Menus{% endblock %}
+{% block contenu %}
+<div class="card login">
+  <h2>Connexion impossible</h2>
+  <div class="msg error">{{ message }}</div>
+  <p class="small">Voir docs/MCP.md, rubrique « En cas de problème ».</p>
+</div>
+{% endblock %}

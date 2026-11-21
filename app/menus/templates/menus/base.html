@@ -35,6 +35,7 @@
   {% for m in messages %}<div class="msg{% if m.level_tag == 'error' %} error{% endif %}">{{ m }}</div>{% endfor %}
   {% block contenu %}{% endblock %}
 </main>
+{% with v=version_appli %}<footer class="version">Version {% if v.date %}du {{ v.date|date:"j F Y à H:i" }}{% else %}de développement{% endif %} · {{ v.code }} · démarrée le {{ v.demarree_le|date:"j F à H:i" }}</footer>{% endwith %}
 {% block scripts %}{% endblock %}
 </body>
 </html>

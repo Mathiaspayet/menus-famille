@@ -67,7 +67,16 @@ Deux possibilités, comme pour la gestion locative :
 Sur le téléphone : ouvrir l'adresse, puis **Partager → Sur l'écran d'accueil** (iPhone)
 ou **⋮ → Ajouter à l'écran d'accueil** (Android). L'appli s'ouvre alors comme une vraie appli.
 
-## 7. Sauvegarde
+## 7. Connecter Claude (facultatif)
+
+Une fois l'accès HTTPS en place (étape 6), Claude peut lire et modifier directement les menus,
+les courses et le frigo. Mode d'emploi : [docs/MCP.md](docs/MCP.md). Il n'y a rien à régler
+sur le NAS : il suffit d'ajouter le connecteur `https://ton-domaine/mcp` dans Claude.
+
+Pour vérifier qu'une mise à jour est arrivée : le **bas de chaque page** affiche la date de la
+version en service.
+
+## 8. Sauvegarde
 
 Ajoute `/volume1/docker/menus-famille/data` à ta tâche **Hyper Backup** : c'est là que tout est stocké.
 

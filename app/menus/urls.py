@@ -1,6 +1,6 @@
 from django.urls import path
 
-from . import views
+from . import mcp, oauth, views
 
 urlpatterns = [
     path("", views.accueil, name="accueil"),
@@ -18,4 +18,13 @@ urlpatterns = [
     path("infos/", views.infos, name="infos"),
     path("export.json", views.exporter, name="exporter"),
     path("plan/", views.plan, name="plan"),
+    # Serveur MCP pour Claude, et sa connexion OAuth (voir docs/MCP.md)
+    path("mcp", mcp.point_mcp, name="mcp"),
+    path("mcp/", mcp.point_mcp),
+    path(".well-known/oauth-protected-resource", oauth.metadonnees_ressource),
+    path(".well-known/oauth-protected-resource/mcp", oauth.metadonnees_ressource),
+    path(".well-known/oauth-authorization-server", oauth.metadonnees_serveur),
+    path("oauth/enregistrer/", oauth.enregistrer, name="oauth_enregistrer"),
+    path("oauth/autoriser/", oauth.autoriser, name="oauth_autoriser"),
+    path("oauth/jeton/", oauth.jeton, name="oauth_jeton"),
 ]

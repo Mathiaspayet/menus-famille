@@ -7,6 +7,8 @@ Petite appli web auto-hébergée (Synology + Docker) pour une famille de 4 :
   si l'un fait le primeur lundi, l'autre voit ce qui reste à acheter mardi.
 - **Frigo** : on note ce qui reste, pour que Claude en tienne compte.
 - **Modifier avec Claude** : un bouton ouvre Claude avec la question pré-remplie.
+- **Connecteur Claude (MCP)** : Claude lit et modifie directement les menus, les courses et le frigo
+  depuis l'app Claude ([mode d'emploi](docs/MCP.md)).
 - **Plan** : export / import du plan en JSON, pour le faire réajuster par Claude ([format](docs/FORMAT_PLAN.md)).
 
 Le dépôt ne contient **aucune donnée familiale** : le plan est importé depuis l'appli et vit uniquement dans la base du NAS.
@@ -39,7 +41,8 @@ python manage.py runserver        # http://127.0.0.1:8000
 python manage.py test menus       # les tests
 ```
 
-## Étape suivante prévue
+## Version installée
 
-Un serveur **MCP** pour que Claude (dans l'app Claude) lise et modifie directement la base du NAS,
-sans passer par l'export / import.
+Le bas de chaque page indique la version en service (date de fabrication de l'image, code du commit,
+heure de démarrage). Après un `push`, elle change dans les ~5 minutes : c'est le signe que Watchtower
+a bien installé la mise à jour.

@@ -146,3 +146,62 @@ class ResteFrigo(models.Model):
 
     def __str__(self):
         return f"{self.nom} {self.quantite}".strip()
+
+
+# ---------------------------------------------------------------------------
+# Connexion de Claude (serveur MCP, voir docs/MCP.md)
+#
+# Claude se connecte comme une application « OAuth » : la personne se
+# connecte avec son compte de l'appli, clique sur « Autoriser », et Claude
+# reçoit un jeton. Seule l'empreinte (SHA-256) des codes et jetons est
+# enregistrée : la base ne contient aucun jeton utilisable.
+# ---------------------------------------------------------------------------
+
+class ClientOAuth(models.Model):
+    """Application qui s'est enregistrée pour demander un accès (Claude)."""
+
+    client_id = models.CharField(max_length=64, unique=True)
+    nom = models.CharField(max_length=200, blank=True)
+    redirect_uris = models.JSONField(default=list)
+    cree_le = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "application connectée"
+        verbose_name_plural = "applications connectées"
+
+    def __str__(self):
+        return self.nom or self.client_id
+
+
+class CodeOAuth(models.Model):
+    """Code à usage unique, valable quelques minutes, échangé contre un jeton."""
+
+    code_hash = models.CharField(max_length=64, unique=True)
+    client = models.ForeignKey(ClientOAuth, on_delete=models.CASCADE)
+    utilisateur = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    redirect_uri = models.TextField()
+    code_challenge = models.CharField(max_length=128)
+    scope = models.CharField(max_length=200, blank=True)
+    expire_le = models.DateTimeField()
+
+
+class JetonOAuth(models.Model):
+    """Accès de Claude au compte d'une personne. Supprimer la ligne = déconnecter Claude."""
+
+    client = models.ForeignKey(ClientOAuth, on_delete=models.CASCADE, related_name="jetons")
+    utilisateur = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    acces_hash = models.CharField(max_length=64, unique=True)
+    acces_expire_le = models.DateTimeField()
+    rafraichissement_hash = models.CharField(max_length=64, unique=True)
+    rafraichissement_expire_le = models.DateTimeField()
+    scope = models.CharField(max_length=200, blank=True)
+    cree_le = models.DateTimeField(auto_now_add=True)
+    utilise_le = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ["-cree_le"]
+        verbose_name = "connexion de Claude"
+        verbose_name_plural = "connexions de Claude"
+
+    def __str__(self):
+        return f"{self.client} → {self.utilisateur}"

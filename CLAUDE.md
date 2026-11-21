@@ -44,6 +44,12 @@ rattache par l'étiquette `com.centurylinklabs.watchtower.scope=gestion-locative
   (`python manage.py makemigrations menus`) : elle s'applique au démarrage du conteneur.
 - Garder le format du plan rétrocompatible (voir `docs/FORMAT_PLAN.md`) : des
   fichiers exportés existent chez l'utilisateur.
+- Serveur MCP : les descriptions d'outils et les `INSTRUCTIONS` (`mcp.py`) restent
+  génériques (dépôt public) ; les données familiales viennent de la base. Tout nouvel
+  outil va dans `mcp_outils.py` avec son test dans `tests.py` (classe `McpTests`).
+- La version affichée en bas des pages vient de `BUILD_VERSION` / `BUILD_DATE`
+  (passées par GitHub Actions au build) : elle permet de vérifier que Watchtower a
+  bien déployé la dernière version.
 
 ## 3. Ports déjà utilisés sur le NAS (projets de l'utilisateur)
 
@@ -65,21 +71,26 @@ Avant de choisir un nouveau port, vérifier ce tableau (et le tenir à jour).
 app/config/        réglages Django (tout se règle par variables d'environnement)
 app/menus/
   models.py        Plan, Recette, PetitDej, Jour, ListeCourses, Article, ResteFrigo
+                   + ClientOAuth, CodeOAuth, JetonOAuth (connexion de Claude)
   plan_io.py       import / export JSON du plan (cœur de la logique)
   views.py         écrans ; courses.js = cases cochées + relecture toutes les 8 s
+  mcp.py           serveur MCP (/mcp, JSON-RPC, sans session, réponses JSON)
+  mcp_outils.py    les outils proposés à Claude (lire_jour, modifier_jour, …)
+  oauth.py         connexion OAuth 2.1 de Claude (découverte, DCR, PKCE, jetons)
+  context_processors.py   version affichée en bas des pages
   tests.py
 docs/FORMAT_PLAN.md   format du fichier de plan
+docs/MCP.md           connecter Claude (pas à pas) et liste des outils
 GUIDE_INSTALLATION_NAS.md
 ```
 
 ## 5. Feuille de route
 
 1. ✅ Appli sur le NAS : menus, courses partagées, frigo, export/import.
-2. **Serveur MCP** dans l'appli (ex. endpoint `/mcp`, protégé par jeton) pour
-   que Claude, depuis l'app Claude de l'utilisateur, lise et modifie directement
-   la base : lire le plan d'un jour, remplacer un repas, cocher/décocher,
-   gérer le frigo, régénérer une liste de courses. Nécessite l'accès HTTPS
-   via le reverse proxy du NAS. Pas de clé API Anthropic (l'utilisateur ne
-   veut pas de coût en plus de son abonnement).
+2. ✅ **Serveur MCP** dans l'appli (`/mcp`, connexion OAuth avec le compte de
+   l'appli) : Claude lit et modifie directement la base (jour, repas, recettes,
+   courses, frigo, plan complet). Mode d'emploi : `docs/MCP.md`. Accès HTTPS via
+   le reverse proxy du NAS. Pas de clé API Anthropic (l'utilisateur ne veut pas
+   de coût en plus de son abonnement).
 3. Projet Claude « Menus famille » avec les consignes ; le bouton
    « Modifier avec Claude » pointera dessus (`CLAUDE_PROJECT_URL`).

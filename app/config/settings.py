@@ -63,6 +63,7 @@ TEMPLATES = [
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
+                "menus.context_processors.version",
             ],
         },
     },
@@ -110,6 +111,10 @@ USE_X_FORWARDED_HOST = True
 if os.environ.get("DJANGO_HTTPS", "False").lower() in ("1", "true", "yes"):
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
+
+# Version de l'image Docker, fournie par GitHub Actions (voir Dockerfile).
+BUILD_VERSION = os.environ.get("BUILD_VERSION", "dev")
+BUILD_DATE = os.environ.get("BUILD_DATE", "")
 
 # Bouton « Modifier avec Claude » : adresse d'un projet Claude dédié (facultatif).
 # Vide : le bouton ouvre une nouvelle conversation avec la question pré-remplie.

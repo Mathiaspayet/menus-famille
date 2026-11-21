@@ -1,0 +1,18 @@
+{% extends "menus/base.html" %}
+{% block titre %}Autoriser Claude · Menus{% endblock %}
+{% block contenu %}
+<div class="card login">
+  <h2>Autoriser Claude ?</h2>
+  <p><b>{{ client.nom|default:"Une application" }}</b> demande à accéder à Menus famille avec le compte
+    <b>{{ user.first_name|default:user.username }}</b>.</p>
+  <p>Cette application pourra <b>lire</b> les menus, les recettes, les listes de courses et le frigo, et les <b>modifier</b> :
+    remplacer un repas, cocher des articles, mettre à jour une liste, noter un reste…</p>
+  <p class="small">Après votre accord, vous serez renvoyé vers <b>{{ hote }}</b>{% if local %} (Claude Code, sur cet ordinateur){% endif %}.
+    Vous pourrez retirer cet accès à tout moment (Administration → Connexions de Claude).</p>
+  <form method="post" class="form">{% csrf_token %}
+    {% for nom, valeur in champs.items %}<input type="hidden" name="{{ nom }}" value="{{ valeur }}">{% endfor %}
+    <button class="btn" type="submit" name="decision" value="autoriser">Autoriser</button>
+    <button class="btn ghost" type="submit" name="decision" value="refuser">Refuser</button>
+  </form>
+</div>
+{% endblock %}
