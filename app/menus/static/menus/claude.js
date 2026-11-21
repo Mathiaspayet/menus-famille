@@ -18,6 +18,6 @@
       if (navigator.clipboard && window.isSecureContext) navigator.clipboard.writeText(texte).catch(copieSecours);
       else copieSecours();
     } catch (err) { copieSecours(); }
-    if (aide) aide.hidden = false;
+    if (aide) aide.classList.add("copie");
   });
 })();

@@ -1,3 +1,3 @@
 {% comment %}Bouton vers Claude. Avec un projet configuré, claude.js copie d'abord la question.{% endcomment %}
 <a class="claude" href="{{ lien_claude.url }}" target="_blank" rel="noopener"{% if lien_claude.projet %} data-copier="{{ lien_claude.question }}"{% endif %}>✦ {{ texte }}</a>
-{% if lien_claude.projet %}<p class="claude-aide" hidden>Une conversation s'ouvre dans le projet « Menus famille », avec la question déjà écrite : complétez-la puis envoyez. Si le texte n'apparaît pas, il est aussi copié : collez-le (appui long puis « Coller »).</p>{% endif %}
+{% if lien_claude.projet %}<p class="claude-aide">La question est copiée en touchant le bouton : dans le projet « Menus famille », collez-la dans la zone de saisie (appui long puis « Coller »), complétez et envoyez.</p>{% endif %}

@@ -105,7 +105,7 @@ class EcransTests(TestCase):
         uuid = "0193a1b2-c3d4-7e5f-8a9b-0c1d2e3f4a5b"
         with self.settings(CLAUDE_PROJECT_URL=f"https://claude.ai/project/{uuid}"):
             r = self.client.get("/jour/2026-11-16/")
-            self.assertContains(r, f'href="https://claude.ai/new?project={uuid}&amp;q=Menus%20famille')
+            self.assertContains(r, f'href="https://claude.ai/project/{uuid}"')
             self.assertContains(r, 'data-copier="Menus famille — Lundi 16 nov')
             self.assertContains(r, "menus/claude.js")
             self.assertContains(self.client.get("/frigo/"), "data-copier=")
