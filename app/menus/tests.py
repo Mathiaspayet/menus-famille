@@ -98,9 +98,10 @@ class EcransTests(TestCase):
 
     def test_bouton_claude_sans_puis_avec_projet(self):
         self.client.force_login(self.parent1)
-        r = self.client.get("/jour/2026-11-16/")
-        self.assertContains(r, "https://claude.ai/new?q=")
-        self.assertNotContains(r, "data-copier")
+        with self.settings(CLAUDE_PROJECT_URL=""):
+            r = self.client.get("/jour/2026-11-16/")
+            self.assertContains(r, "https://claude.ai/new?q=")
+            self.assertNotContains(r, "data-copier")
         uuid = "0193a1b2-c3d4-7e5f-8a9b-0c1d2e3f4a5b"
         with self.settings(CLAUDE_PROJECT_URL=f"https://claude.ai/project/{uuid}"):
             r = self.client.get("/jour/2026-11-16/")
