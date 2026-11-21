@@ -51,8 +51,12 @@ rattache par l'étiquette `com.centurylinklabs.watchtower.scope=gestion-locative
   téléphone) : texte de base 17 px, barre de navigation en bas (`base.html` :
   Menus · Courses · Frigo · Plus), une seule colonne, l'essentiel visible et le
   détail replié (recettes, « Pour… », remarque, conseils des courses). Petit-déj,
-  Infos et Plan sont dans la page « Plus ». Vérifier chaque changement visuel par
-  une capture à la taille d'un téléphone (Playwright, appareil « Pixel 7 »).
+  Infos et Plan sont dans la page « Plus ». À partir de 768 px (iPad) : recette en
+  deux colonnes, courses en deux colonnes ; à partir de 1000 px (iPad couché) : le
+  jour à gauche, les repas à droite. Vérifier chaque changement visuel par une
+  capture téléphone (Playwright « Pixel 7 ») et iPad (820×1180 et 1180×820).
+- « Pour 4 personnes » (`portions.js`) : retirer quelqu'un recalcule tous les
+  ingrédients (part lue dans le tableau des portions, boîtes comprises).
 - Hors connexion : `sw.js` ne doit jamais garder en copie `/mcp`, `/oauth/`, `/admin/`,
   `/connexion/`… (liste `JAMAIS`). Une nouvelle page qui modifie des données doit
   rester accessible uniquement en ligne.

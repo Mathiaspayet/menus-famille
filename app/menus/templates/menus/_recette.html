@@ -1,14 +1,16 @@
-<div class="body">
+<div class="body"{% if not sans_ajustement %} data-ajuster{% endif %}{% if r.boites %} data-boites="1"{% endif %}>
   {% if r.duree and not duree_affichee or r.boites or r.feu %}<p class="meta">{% if r.duree and not duree_affichee %}<span>⏱ {{ r.duree }}</span>{% endif %}{% if r.boites %}<span class="box">+ 2 boîtes pour demain midi</span>{% endif %}{% if r.feu %}<span class="fire">🌶 {{ r.feu }} à table</span>{% endif %}</p>{% endif %}
   {% if r.portions %}
   <h4>Dans l'assiette</h4>
   {% include "menus/_tableau.html" with lignes=r.portions %}
   {% if r.boites %}<p class="note note-boites">Remplissez tout de suite les 2 boîtes avec les mêmes quantités que les assiettes des adultes.</p>{% endif %}
   {% endif %}
-  <h4>Ingrédients</h4>
-  <ul class="ing">{% for i in r.ingredients %}<li>{{ i }}</li>{% endfor %}</ul>
-  <h4>Préparation</h4>
-  <ol class="steps">{% for e in r.etapes %}<li>{{ e }}</li>{% endfor %}</ol>
+  <div class="recette-colonnes">
+    <section><h4>Ingrédients</h4>
+    <ul class="ing">{% for i in r.ingredients %}<li>{{ i }}</li>{% endfor %}</ul></section>
+    <section><h4>Préparation</h4>
+    <ol class="steps">{% for e in r.etapes %}<li>{{ e }}</li>{% endfor %}</ol></section>
+  </div>
   {% if r.dessert %}<p class="dessert"><b>Dessert</b> {{ r.dessert }}</p>{% endif %}
   {% if r.note %}<p class="note">{{ r.note }}</p>{% endif %}
 </div>

@@ -133,9 +133,9 @@ th:first-child{padding-left:0}
 td{white-space:nowrap}
 thead th{font-size:.74rem;color:var(--muted);font-weight:700;vertical-align:bottom}
 tbody th{font-weight:700}
-table.portions .tot{font-weight:700;color:var(--pine);border-left:1px solid var(--line)}
 table.portions tr.ligne-boite th,table.portions tr.ligne-boite td{color:var(--muted);font-style:italic}
-.a-peser{font-size:.92rem;background:var(--soft);border-radius:10px;padding:8px 10px;margin:8px 0 0}
+.ajustement{font-size:.88rem;color:var(--warn);background:var(--warnbg);border-radius:10px;padding:8px 10px;margin:0 0 6px}
+b.ajuste{color:var(--pumpkin)}
 ul.ing{list-style:none;margin:0;padding:0}
 ul.ing li{padding:7px 0;border-bottom:1px dashed var(--line)}
 ul.ing li:last-child{border-bottom:0}
@@ -243,8 +243,33 @@ input[type=text],input[type=password],input[type=file],textarea{font:inherit;wid
 .installer span{flex:1 1 220px}
 .installer .btn{padding:7px 14px}
 
-/* ------------------------------------------------------------------ grands écrans */
-@media (min-width:700px){
-  html{font-size:16px}
-  nav.barre{left:50%;right:auto;transform:translateX(-50%);width:min(640px,100%);border:1px solid var(--line);border-bottom:0;border-radius:16px 16px 0 0}
+/* ------------------------------------------------------------------ iPad et grands écrans */
+@media (min-width:768px){
+  main{max-width:840px;padding-left:28px;padding-right:28px}
+  h1{font-size:2.15rem}
+  .days,.listes{margin-left:-28px;margin-right:-28px;padding-left:28px;padding-right:28px}
+  .magasins{margin-left:-28px;margin-right:-28px;padding-left:28px;padding-right:28px}
+  .days a{flex-basis:56px;height:64px}
+  .days a b{font-size:1.4rem}
+  .todo,.remarque{font-size:1rem}
+  .what{font-size:1.2rem}
+  .meal>summary,.meal>.head{padding:16px 20px}
+  .body{padding:6px 20px 22px}
+  /* Recette : ingrédients à gauche, étapes à droite */
+  .recette-colonnes{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);gap:32px;align-items:start}
+  /* Courses : deux colonnes d'articles */
+  .articles{columns:2;column-gap:40px}
+  .articles .item{break-inside:avoid}
+  .articles h2.cat{break-after:avoid}
+  .articles h2.cat:first-child{margin-top:12px}
+  nav.barre{padding-left:max(calc(50% - 320px),env(safe-area-inset-left));padding-right:max(calc(50% - 320px),env(safe-area-inset-right))}
+  nav.barre a{flex-direction:row;gap:8px;font-size:.88rem}
+}
+/* iPad à l'horizontale, ordinateur : le jour à gauche, les repas à droite */
+@media (min-width:1000px){
+  main:has(.jour-grille){max-width:1240px}
+  .jour-grille{display:grid;grid-template-columns:minmax(320px,380px) minmax(0,1fr);gap:28px;align-items:start}
+  .jour-cote{position:sticky;top:calc(env(safe-area-inset-top) + 14px)}
+  .jour-cote .days{margin:14px 0 16px;padding:2px 0 4px}
+  .jour-repas .repas{margin-top:4px}
 }

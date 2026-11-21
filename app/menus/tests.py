@@ -495,3 +495,13 @@ class InterfaceTelephoneTests(TestCase):
         self.assertContains(plus, "Petits-déjeuners")
         self.assertNotContains(plus, "Gérer le plan")  # réservé à l'équipe
         self.assertEqual(self.client.get("/connexion/").status_code, 200)
+
+
+    def test_ingredients_recalcules_pour_les_presents(self):
+        self.client.force_login(self.parent1)
+        r = self.client.get("/jour/2026-11-17/").content.decode()
+        # Soir (soupe) : recalculée ; midi en boîte (curry cuisiné la veille) : pas recalculé.
+        self.assertIn('<div class="body" data-ajuster>', r)
+        self.assertIn('<div class="body" data-boites="1">', r)
+        self.assertIn("menus/portions.js", r)
+        self.assertNotIn("À peser", r)

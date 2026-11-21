@@ -21,6 +21,7 @@
 </div>
 
 <div class="ticket" id="ticket" data-etat="{% url 'courses_etat' liste.id %}" data-magasin="{{ magasin }}">
+  <div class="articles">
   {% for cat in categories %}
     <h2 class="cat">{{ cat.nom }}</h2>
     {% for a in cat.articles %}
@@ -32,6 +33,7 @@
     {% endfor %}
   {% empty %}<p class="small">Rien à acheter dans ce magasin pour cette liste.</p>
   {% endfor %}
+  </div>
   <p class="tout-fait" hidden>Tout est coché dans ce magasin ✓</p>
   <div class="bar">
     <form method="post" action="{% url 'courses_decocher' liste.id %}" onsubmit="return confirm('Décocher tous les articles de ce magasin ?')">{% csrf_token %}

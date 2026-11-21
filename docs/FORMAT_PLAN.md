@@ -37,13 +37,16 @@ même format**. Vous pouvez lui coller cette page pour qu'il connaisse les règl
 }
 ```
 
-Portions et « Qui mange ? » : sur la page du jour, on peut retirer une personne
-(ou les boîtes du lendemain) ; la colonne « Total » additionne alors les parts des
-présents. Pour en profiter, écrire viandes et féculents en deux lignes
-(`"Porc cru"`, `"Porc cuit (≈)"`) et les parts des boîtes sur des lignes
-`"Boîte de demain : porc cru"` : l'appli affiche aussi « À peser (cru) », la somme
-des lignes crues de la même denrée. Valeurs additionnables : `"120 g"`, `"400 ml"`,
-`"1 pavé"`, `"⅗ de pavé"`, `"1½"` ; une case vide compte pour zéro.
+Portions et « Pour 4 personnes » : sur la page du jour, on peut retirer une personne
+(ou les boîtes du lendemain). L'appli recalcule alors **tous les ingrédients** des
+recettes du jour : la part de chacun est lue dans le tableau des portions (ex. 330 g
+sur 980 g), et pour une recette `"boxes": true` les 2 boîtes comptent comme les
+assiettes des deux adultes. Pour que le calcul marche, écrire des valeurs simples :
+`"120 g"`, `"400 ml"`, `"1 pavé"`, `"⅗ de pavé"`, `"1½"` ; une case vide compte pour
+zéro ; une ligne avec du texte (`"cantine"`, `"50 %"`) est ignorée. Les parts des
+boîtes peuvent aussi être écrites sur des lignes `"Boîte de demain : porc cru"`.
+Les ingrédients sont recalculés s'ils commencent par une quantité (`"625 g de…"`,
+`"2 gousses…"`, `"1 c. à soupe…"`, `"20 cl…"`) ; `"Thym"` reste tel quel.
 
 ## Jour
 

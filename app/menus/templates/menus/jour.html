@@ -1,6 +1,8 @@
 {% extends "menus/base.html" %}{% load static %}
 {% block titre %}{{ j.libelle }} · Menus{% endblock %}
 {% block contenu %}
+<div class="jour-grille">
+<div class="jour-cote">
 <div class="entete-jour">
   {% if precedent %}<a class="fleche" href="{% url 'jour' precedent.date|date:'Y-m-d' %}" aria-label="Jour précédent">‹</a>{% else %}<span class="fleche"></span>{% endif %}
   <div>
@@ -25,10 +27,12 @@
     {% for p in personnes %}<button type="button" class="chip" data-p="{{ forloop.counter0 }}" aria-pressed="true">{{ p }}</button>{% endfor %}
     <button type="button" class="chip chip-boite" data-boites aria-pressed="true">Boîtes de demain</button>
   </div>
-  <p class="qui-aide">Touchez un prénom pour retirer sa part des recettes du jour ; la colonne « Total » s'adapte.</p>
+  <p class="qui-aide">Touchez un prénom pour le retirer : les ingrédients des recettes du jour sont recalculés pour les présents.</p>
 </details>
 {% endif %}
+</div>
 
+<div class="jour-repas">
 <div class="repas">
 {% if j.petit_dej %}
 <details class="meal"><summary><span class="slot">Petit-déj</span><span class="what">{{ j.petit_dej.titre }}<small>Formule {{ j.petit_dej.code }}</small></span><span class="chev" aria-hidden="true">›</span></summary>
@@ -40,7 +44,7 @@
 <details class="meal"><summary><span class="slot">Midi</span>
   <span class="what">{% if j.midi_boite %}{{ j.midi_texte }}{% if j.midi_detail %}<small>{{ j.midi_detail }}</small>{% endif %}{% else %}{{ j.midi_recette.titre }}{% if j.midi_recette.dessert %}<small>{{ j.midi_recette.dessert_court }}</small>{% endif %}{% endif %}</span>
   <span class="chev" aria-hidden="true">›</span></summary>
-  {% include "menus/_recette.html" with r=j.midi_recette %}
+  {% include "menus/_recette.html" with r=j.midi_recette sans_ajustement=j.midi_boite %}
 </details>
 {% elif j.midi_texte %}
 <div class="meal"><div class="head"><span class="slot">Midi</span><span class="what">{{ j.midi_texte }}{% if j.midi_detail %}<small>{{ j.midi_detail }}</small>{% endif %}</span></div></div>
@@ -74,6 +78,8 @@
       <button class="btn" type="submit">Enregistrer</button>
     </form>
   </details>
+</div>
+</div>
 </div>
 {% endblock %}
 {% block pied %}{% include "menus/_version.html" %}{% endblock %}
