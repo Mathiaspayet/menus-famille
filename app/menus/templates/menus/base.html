@@ -1,0 +1,40 @@
+{% load static %}<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#1f3d31">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<link rel="manifest" href="{% static 'menus/manifest.webmanifest' %}">
+<link rel="icon" href="{% static 'menus/icone.svg' %}" type="image/svg+xml">
+<link rel="apple-touch-icon" href="{% static 'menus/icone-180.png' %}">
+<title>{% block titre %}Menus de la semaine{% endblock %}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Gloock&family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{% static 'menus/app.css' %}">
+</head>
+<body>
+<header>
+  <div class="top">
+    <h1><a href="{% url 'accueil' %}" style="text-decoration:none">Menus de la semaine</a></h1>
+    {% if user.is_authenticated %}<span class="who">{{ user.first_name|default:user.username }}{% if user.is_staff %} · <a href="{% url 'plan' %}">Plan</a>{% endif %}</span>{% endif %}
+  </div>
+  {% if user.is_authenticated %}
+  <nav class="tabs" aria-label="Rubriques">
+    <a href="{% url 'accueil' %}" class="{% if onglet == 'semaine' %}on{% endif %}">Semaine</a>
+    <a href="{% url 'petit_dej' %}" class="{% if onglet == 'petit-dej' %}on{% endif %}">Petit-déj</a>
+    <a href="{% url 'courses' %}" class="{% if onglet == 'courses' %}on{% endif %}">Courses</a>
+    <a href="{% url 'frigo' %}" class="{% if onglet == 'frigo' %}on{% endif %}">Frigo</a>
+    <a href="{% url 'infos' %}" class="{% if onglet == 'infos' %}on{% endif %}">Infos</a>
+  </nav>
+  {% endif %}
+</header>
+<main>
+  {% for m in messages %}<div class="msg{% if m.level_tag == 'error' %} error{% endif %}">{{ m }}</div>{% endfor %}
+  {% block contenu %}{% endblock %}
+</main>
+{% block scripts %}{% endblock %}
+</body>
+</html>

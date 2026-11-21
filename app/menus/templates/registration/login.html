@@ -1,0 +1,15 @@
+{% extends "menus/base.html" %}
+{% block titre %}Connexion · Menus{% endblock %}
+{% block contenu %}
+<div class="card login">
+  <h2>Connexion</h2>
+  {% if form.errors %}<div class="msg error">Identifiant ou mot de passe incorrect.</div>{% endif %}
+  <form method="post" class="form">{% csrf_token %}
+    <input type="text" name="username" placeholder="Identifiant" autocomplete="username" autocapitalize="none" required autofocus aria-label="Identifiant">
+    <input type="password" name="password" placeholder="Mot de passe" autocomplete="current-password" required aria-label="Mot de passe">
+    <input type="hidden" name="next" value="{{ next }}">
+    <button class="btn" type="submit">Se connecter</button>
+  </form>
+  <p class="small">Vous restez connecté un an sur cet appareil.</p>
+</div>
+{% endblock %}

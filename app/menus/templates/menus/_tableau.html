@@ -1,0 +1,5 @@
+{# Tableau de portions : lignes = [aliment, part personne 1, part personne 2, ...] #}
+<div class="tw"><table>
+  <thead><tr><th></th>{% for p in personnes %}<th>{{ p }}</th>{% endfor %}</tr></thead>
+  <tbody>{% for ligne in lignes %}<tr>{% for c in ligne %}{% if forloop.first %}<th>{{ c }}</th>{% else %}<td>{{ c|default:"–" }}</td>{% endif %}{% endfor %}</tr>{% endfor %}</tbody>
+</table></div>

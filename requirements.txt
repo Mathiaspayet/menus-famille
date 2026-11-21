@@ -1,0 +1,6 @@
+# Versions épinglées : l'image est reconstruite et déployée automatiquement
+# (Watchtower). Pour monter une version : la modifier ici et vérifier que
+# `python manage.py test` passe.
+Django==5.2.17
+gunicorn==26.1.0
+whitenoise==6.12.0

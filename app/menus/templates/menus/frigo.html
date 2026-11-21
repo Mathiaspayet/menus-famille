@@ -1,0 +1,28 @@
+{% extends "menus/base.html" %}
+{% block titre %}Frigo · Menus{% endblock %}
+{% block contenu %}
+<h2>Il reste au frigo</h2>
+<div class="card">
+  <form method="post" class="form">{% csrf_token %}
+    <div class="row">
+      <input type="text" name="nom" placeholder="Ex. : courgettes" required aria-label="Aliment">
+      <input type="text" name="quantite" placeholder="300 g" aria-label="Quantité">
+    </div>
+    <input type="text" name="remarque" placeholder="Remarque (facultatif) : à finir avant jeudi…" aria-label="Remarque">
+    <button class="btn" type="submit">Ajouter</button>
+  </form>
+</div>
+
+<div class="ticket">
+  {% for r in restes %}
+  <div class="frigo-item">
+    <div><b>{{ r.nom }}</b>{% if r.quantite %} · {{ r.quantite }}{% endif %}
+      <small>{% if r.remarque %}{{ r.remarque }} · {% endif %}ajouté le {{ r.ajoute_le|date:"j b" }}{% if r.ajoute_par %} par {{ r.ajoute_par.first_name|default:r.ajoute_par.username }}{% endif %}</small></div>
+    <form method="post" action="{% url 'frigo_retirer' r.id %}">{% csrf_token %}<button class="x" type="submit" title="Utilisé ou jeté">Retirer</button></form>
+  </div>
+  {% empty %}<p class="small" style="margin-top:12px">Rien de noté pour l'instant. Ajoutez ici ce qui reste après les courses ou un repas.</p>
+  {% endfor %}
+</div>
+
+<a class="claude" href="{{ lien_claude }}" target="_blank" rel="noopener">✦ Demander à Claude d'adapter les menus</a>
+{% endblock %}

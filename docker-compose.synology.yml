@@ -1,0 +1,41 @@
+# ============================================================
+# Docker Compose - Déploiement Synology (Container Manager)
+# ============================================================
+# 1. Créer le dossier /volume1/docker/menus-famille sur le NAS
+# 2. Y mettre ce fichier (renommé docker-compose.yml) et le .env (voir .env.example)
+# 3. Container Manager > Projet > Créer > dossier ci-dessus
+#
+# L'image est construite par GitHub Actions à chaque push sur main,
+# puis Watchtower la met à jour automatiquement sur le NAS.
+# ============================================================
+
+services:
+  menus:
+    image: ghcr.io/mathiaspayet/menus-famille:latest
+    container_name: menus_famille
+    restart: unless-stopped
+    ports:
+      # 8000 est déjà pris par la gestion locative : on expose sur 8010
+      - "8010:8000"
+    env_file:
+      - .env
+    volumes:
+      # La base SQLite (menus, cases cochées, frigo) vit ici, hors du conteneur :
+      # elle survit aux mises à jour. À inclure dans Hyper Backup.
+      - /volume1/docker/menus-famille/data:/app/data
+    labels:
+      - "com.centurylinklabs.watchtower.scope=menus-famille"
+
+  # Watchtower dédié : ne surveille que les conteneurs du scope « menus-famille »
+  watchtower-menus:
+    image: containrrr/watchtower
+    container_name: watchtower_menus
+    restart: unless-stopped
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      WATCHTOWER_POLL_INTERVAL: 300
+      WATCHTOWER_CLEANUP: "true"
+      WATCHTOWER_SCOPE: "menus-famille"
+    labels:
+      - "com.centurylinklabs.watchtower.scope=menus-famille"

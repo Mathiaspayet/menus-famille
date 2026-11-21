@@ -1,0 +1,14 @@
+# Pour essayer en local sur un PC : docker compose up --build  puis http://localhost:8010
+services:
+  menus:
+    build: .
+    ports:
+      - "8010:8000"
+    environment:
+      DJANGO_SECRET_KEY: dev-local-uniquement
+      DJANGO_DEBUG: "False"
+      DJANGO_ALLOWED_HOSTS: localhost,127.0.0.1
+      DJANGO_SUPERUSER_USERNAME: mathias
+      DJANGO_SUPERUSER_PASSWORD: changer-moi
+    volumes:
+      - ./data:/app/data

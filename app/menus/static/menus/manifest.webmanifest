@@ -1,0 +1,14 @@
+{
+  "name": "Menus de la semaine",
+  "short_name": "Menus",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f4f5f1",
+  "theme_color": "#1f3d31",
+  "lang": "fr",
+  "icons": [
+    {"src": "icone.svg", "sizes": "any", "type": "image/svg+xml"},
+    {"src": "icone-180.png", "sizes": "180x180", "type": "image/png"},
+    {"src": "icone-512.png", "sizes": "512x512", "type": "image/png"}
+  ]
+}

@@ -1,0 +1,14 @@
+{% extends "menus/base.html" %}
+{% block titre %}Petits-déjeuners · Menus{% endblock %}
+{% block contenu %}
+<h2>Petits-déjeuners</h2>
+<div class="card"><p>Quatre formules imposées, qui tournent chaque semaine. Boisson : eau, thé ou infusion sans sucre. Le lait est toujours sans lactose.</p></div>
+{% for f in formules %}
+<div class="card">
+  <div class="f"><span class="l">{{ f.code }}</span><div><h3>{{ f.titre }}</h3><span class="d">{{ f.jours }}</span></div></div>
+  {% include "menus/_tableau.html" with lignes=f.lignes %}
+  {% if f.preparation %}<p class="note">{{ f.preparation }}</p>{% endif %}
+</div>
+{% empty %}<p class="small">Aucune formule dans le plan.</p>
+{% endfor %}
+{% endblock %}

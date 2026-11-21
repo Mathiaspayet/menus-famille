@@ -1,0 +1,10 @@
+.git
+.github
+.env
+data
+app/data
+app/staticfiles
+**/__pycache__
+*.sqlite3
+plan*.json
+docs

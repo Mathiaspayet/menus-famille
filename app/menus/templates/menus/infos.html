@@ -1,0 +1,7 @@
+{% extends "menus/base.html" %}
+{% block titre %}Infos · Menus{% endblock %}
+{% block contenu %}
+<h2>Infos</h2>
+{# Contenu fourni par le fichier de plan, importé uniquement par un compte « équipe ». #}
+{% if plan.infos_html %}{{ plan.infos_html|safe }}{% else %}<p class="small">Pas encore d'informations dans le plan.</p>{% endif %}
+{% endblock %}

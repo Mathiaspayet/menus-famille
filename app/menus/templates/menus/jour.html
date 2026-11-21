@@ -1,0 +1,59 @@
+{% extends "menus/base.html" %}
+{% block titre %}{{ j.libelle }} · Menus{% endblock %}
+{% block contenu %}
+<div class="weeks" aria-label="Semaines">
+  {% for s in semaines %}<a href="{% url 'jour' s.date|date:'Y-m-d' %}" class="{% if s.semaine == j.semaine %}on{% endif %}"><b>Semaine {{ s.semaine }}</b><span>{{ s.semaine_libelle }}</span></a>{% endfor %}
+</div>
+<div class="days" aria-label="Jours">
+  {% for d in jours %}<a href="{% url 'jour' d.date|date:'Y-m-d' %}" class="{% if d.date == j.date %}on{% endif %}"><b>{{ d.date|date:'j' }}</b><span>{{ d.date|date:'D' }}</span></a>{% endfor %}
+</div>
+
+<h2>{{ j.libelle }}</h2>
+
+{% if j.remarque %}<div class="remarque"><b>Remarque :</b> {{ j.remarque|linebreaksbr }}</div>{% endif %}
+
+{% if j.a_faire %}<div class="todo"><b>À faire</b><ul>{% for t in j.a_faire %}<li>{{ t }}</li>{% endfor %}</ul></div>{% endif %}
+
+{% if j.petit_dej %}
+<details class="meal"><summary><span class="slot">Petit-déj</span><span class="what">{{ j.petit_dej.code }} · {{ j.petit_dej.titre }}</span><span class="chev" aria-hidden="true">›</span></summary>
+  <div class="body">{% include "menus/_tableau.html" with lignes=j.petit_dej.lignes %}{% if j.petit_dej.preparation %}<p class="note">{{ j.petit_dej.preparation }}</p>{% endif %}</div>
+</details>
+{% endif %}
+
+{% if j.midi_recette %}
+<details class="meal"><summary><span class="slot">Midi</span>
+  <span class="what">{% if j.midi_boite %}{{ j.midi_texte }}<small>{{ j.midi_detail }}</small>{% else %}{{ j.midi_recette.titre }}{% if j.midi_recette.dessert %}<small>{{ j.midi_recette.dessert_court }}</small>{% endif %}{% endif %}</span>
+  <span class="chev" aria-hidden="true">›</span></summary>
+  {% include "menus/_recette.html" with r=j.midi_recette %}
+</details>
+{% elif j.midi_texte %}
+<div class="meal"><div class="head"><span class="slot">Midi</span><span class="what">{{ j.midi_texte }}{% if j.midi_detail %}<small>{{ j.midi_detail }}</small>{% endif %}</span><span></span></div></div>
+{% endif %}
+
+{% if j.gouter %}
+<div class="meal"><div class="head"><span class="slot">Goûter</span><span class="what">{{ j.gouter }}<small>Pour chaque enfant</small></span><span></span></div></div>
+{% endif %}
+
+{% if j.soir %}
+<details class="meal" open><summary><span class="slot">Soir</span>
+  <span class="what">{{ j.soir.titre }}<small>{% if j.soir.boites %}+ 2 boîtes pour demain{% if j.soir.dessert %} · {% endif %}{% endif %}{{ j.soir.dessert_court }}</small></span>
+  <span class="chev" aria-hidden="true">›</span></summary>
+  {% include "menus/_recette.html" with r=j.soir %}
+</details>
+{% endif %}
+
+{% if j.a_preparer %}
+<details class="meal prep"><summary><span class="slot">Pour demain</span><span class="what">Boîte du lundi : {{ j.a_preparer.titre }}<small>À préparer ce soir</small></span><span class="chev" aria-hidden="true">›</span></summary>
+  {% include "menus/_recette.html" with r=j.a_preparer %}
+</details>
+{% endif %}
+
+<a class="claude" href="{{ lien_claude }}" target="_blank" rel="noopener">✦ Modifier avec Claude</a>
+
+<details class="meal"><summary><span class="slot">Note</span><span class="what">{% if j.remarque %}Modifier la remarque{% else %}Ajouter une remarque{% endif %}<small>Repas sauté, invités, changement…</small></span><span class="chev" aria-hidden="true">›</span></summary>
+  <div class="body"><form method="post" action="{% url 'jour_remarque' j.date|date:'Y-m-d' %}" class="form" style="margin-top:12px">{% csrf_token %}
+    <textarea name="remarque" rows="3" placeholder="Ex. : curry pas fait, reporté à jeudi">{{ j.remarque }}</textarea>
+    <button class="btn" type="submit">Enregistrer</button>
+  </form></div>
+</details>
+{% endblock %}
