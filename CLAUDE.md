@@ -75,7 +75,8 @@ app/menus/
   plan_io.py       import / export JSON du plan (cœur de la logique)
   views.py         écrans ; courses.js = cases cochées + relecture toutes les 8 s
   mcp.py           serveur MCP (/mcp, JSON-RPC, sans session, réponses JSON)
-  mcp_outils.py    les outils proposés à Claude (lire_jour, modifier_jour, …)
+  mcp_outils.py    les outils proposés à Claude (lire_jour, modifier_jour,
+                   enregistrer_semaine, enregistrer_recettes, …)
   oauth.py         connexion OAuth 2.1 de Claude (découverte, DCR, PKCE, jetons)
   context_processors.py   version affichée en bas des pages
   tests.py
@@ -89,7 +90,10 @@ GUIDE_INSTALLATION_NAS.md
 1. ✅ Appli sur le NAS : menus, courses partagées, frigo, export/import.
 2. ✅ **Serveur MCP** dans l'appli (`/mcp`, connexion OAuth avec le compte de
    l'appli) : Claude lit et modifie directement la base (jour, repas, recettes,
-   courses, frigo, plan complet). Mode d'emploi : `docs/MCP.md`. Accès HTTPS via
+   courses, frigo, plan complet). **Principe : l'appli sert à consulter, c'est
+   Claude (sur claude.ai, via le connecteur) qui tient les menus à jour** ; il
+   peut construire un plan de zéro, morceau par morceau (semaine, lot de
+   recettes, liste de courses). Claude Code n'a pas accès au connecteur. Mode d'emploi : `docs/MCP.md`. Accès HTTPS via
    le reverse proxy du NAS. Pas de clé API Anthropic (l'utilisateur ne veut pas
    de coût en plus de son abonnement).
 3. Projet Claude « Menus famille » avec les consignes ; le bouton

@@ -27,12 +27,17 @@ VERSIONS = ["2025-11-25", "2025-06-18", "2025-03-26"]
 
 INSTRUCTIONS = (
     "Appli « Menus famille » : menus de la semaine, recettes, listes de courses partagées entre les parents "
-    "et restes au frigo. Commencer par lire_infos_famille (personnes, consignes, allergies), puis lire_semaine "
-    "ou lire_jour. Dates au format AAAA-MM-JJ. Pour un plat nouveau : enregistrer_recette, puis modifier_jour. "
-    "Après un changement de repas, proposer de mettre à jour la liste de courses concernée (lire_courses, "
-    "ajouter_article / retirer_article, ou remplacer_liste_courses) et tenir compte du frigo (lire_frigo). "
-    "Respecter les portions par personne et les consignes de l'onglet Infos. Les cases cochées sont partagées : "
-    "ne pas les décocher sans demande. Annoncer clairement chaque modification faite."
+    "et restes au frigo. L'appli sert à consulter ; c'est toi qui tiens les menus à jour avec ces outils. "
+    "Commencer par lire_infos_famille (personnes, consignes, allergies), puis lire_semaine ou lire_jour. "
+    "Dates au format AAAA-MM-JJ. "
+    "Petite modification : enregistrer_recettes si le plat est nouveau, puis modifier_jour. "
+    "Nouvelle semaine ou recopie d'un plan (par exemple un menu préparé dans la conversation) : "
+    "modifier_infos_famille (personnes, consignes) si besoin, enregistrer_petits_dejeuners, enregistrer_recettes "
+    "par lots de 10, enregistrer_semaine (une semaine par appel), puis remplacer_liste_courses (une liste par "
+    "appel). Recopier fidèlement : mêmes clés de recettes, portions dans l'ordre des personnes. "
+    "Après un changement de repas, mettre à jour la liste de courses concernée et tenir compte du frigo "
+    "(lire_frigo). Respecter les portions par personne et les consignes de l'onglet Infos. Les cases cochées "
+    "sont partagées : ne pas les décocher sans demande. Annoncer clairement chaque modification faite."
 )
 
 

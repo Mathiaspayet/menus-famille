@@ -38,8 +38,13 @@ Chaque parent ajoute le connecteur dans **son propre compte Claude** et se conne
   de courses à jour. »
 - « J'ai acheté le poulet et les pommes, coche-les. »
 - « Note au frigo : 300 g de riz cuit. »
-- « Prépare les menus de la semaine prochaine sur le même principe » (compte « équipe »
-  uniquement, après ton accord).
+- « Prépare les menus de la semaine prochaine sur le même principe, avec la liste de courses. »
+- Dans une conversation où Claude a préparé un menu (artefact) : « Recopie ce menu dans l'appli
+  avec le connecteur Menus famille : infos, petits-déjeuners, recettes, les semaines et les
+  listes de courses. »
+
+L'appli sert à **consulter** ; c'est Claude qui tient les menus à jour. Il travaille par
+morceaux : un lot de recettes, une semaine ou une liste de courses à la fois.
 
 Dans une conversation, le connecteur s'active ou se désactive avec le bouton **+** →
 **Connecteurs**.
@@ -53,11 +58,16 @@ Dans une conversation, le connecteur s'active ou se désactive avec le bouton **
 | `lister_recettes`, `lire_recette` | les recettes et les jours où elles sont prévues |
 | `lire_courses`, `lire_frigo` | une liste de courses (avec ce qui est coché, et par qui), les restes |
 | `exporter_plan_complet` | tout le plan au format JSON |
-| `enregistrer_recette` | créer ou modifier une recette |
+| `enregistrer_recettes` | créer ou modifier des recettes (par lots de 10) |
 | `modifier_jour` | remplacer un repas, changer le « À faire », la remarque… |
+| `enregistrer_semaine` | créer ou mettre à jour les jours d'une semaine |
+| `supprimer_jours` | retirer des jours (semaine passée ou annulée) |
+| `enregistrer_petits_dejeuners` | créer ou modifier les formules de petit-déjeuner |
+| `modifier_infos_famille` | personnes et consignes de l'onglet Infos (comptes « équipe ») |
 | `cocher_articles` | cocher ou décocher des articles |
 | `ajouter_article`, `retirer_article` | modifier une liste de courses |
-| `remplacer_liste_courses` | recalculer toute une liste (les cases déjà cochées sont gardées) |
+| `remplacer_liste_courses` | créer ou recalculer une liste (les cases déjà cochées sont gardées) |
+| `supprimer_liste_courses` | retirer une liste |
 | `ajouter_au_frigo`, `retirer_du_frigo` | gérer les restes |
 | `importer_plan_complet` | remplacer tout le plan (comptes « équipe » uniquement) |
 
@@ -80,6 +90,7 @@ Sans aucune utilisation pendant 90 jours, la connexion expire d'elle-même.
 | « Bad Request (400) » sur la page de connexion | Le domaine manque dans `DJANGO_ALLOWED_HOSTS` (fichier `.env` du NAS). |
 | « Cette application n'est pas enregistrée » | Retirer le connecteur dans Claude et l'ajouter à nouveau. |
 | Claude ne voit pas les nouveaux outils après une mise à jour | Dans Claude, déconnecter puis reconnecter le connecteur. |
+| Claude demande la permission à chaque modification | Page du connecteur → permissions des outils → *Toujours autoriser* pour les outils de confiance. |
 
 Les messages d'erreur détaillés sont dans le journal du conteneur `menus_famille`
 (Container Manager → Conteneur → Journal).

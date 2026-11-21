@@ -241,6 +241,7 @@ def lire_infos_famille(utilisateur):
         "personnes": plan.personnes,
         "plan_importe_le": _quand(plan.importe_le),
         "infos": re.sub(r"\n\s*\n+", "\n", strip_tags(plan.infos_html)).strip(),
+        "infos_html": plan.infos_html,
         "petits_dejeuners": [_formule(f) for f in PetitDej.objects.all()],
         "semaines": semaines,
         "listes_de_courses": [{"date_courses": l.date_courses.isoformat(), "libelle": l.libelle, "periode": l.periode}
@@ -338,35 +339,64 @@ def exporter_plan_complet(utilisateur):
 
 # --------------------------------------------------------------------------- modification des menus
 
-@outil("enregistrer_recette", "Créer ou modifier une recette",
-       "Crée la recette si la clé est nouvelle, sinon la remplace. Pour un nouveau plat : l'enregistrer ici, "
-       "puis le placer dans un jour avec modifier_jour. Portions : une ligne par aliment, "
-       "[aliment, part de la 1re personne, part de la 2e, ...] dans l'ordre de « personnes » (lire_infos_famille).",
-       {"cle": {"type": "string", "description": "Identifiant court : minuscules, chiffres, _ ou -. Ex. curry_poulet"},
-        "titre": TEXTE, "duree": {"type": "string", "description": "Ex. 25 min"},
-        "ingredients": LISTE_TEXTES, "etapes": LISTE_TEXTES,
-        "portions": {"type": "array", "items": LISTE_TEXTES},
-        "dessert": TEXTE, "note": TEXTE, "feu": {"type": "string", "description": "Pot du feu (piment à table)"},
-        "boites": {"type": "boolean", "description": "Cuisiner 2 parts de plus pour les boîtes du lendemain"},
-        "boite_prep": BOOLEEN},
-       requis=["cle", "titre", "ingredients", "etapes"])
-def enregistrer_recette(utilisateur, cle, titre, ingredients, etapes, portions=None, duree="", dessert="", note="",
-                        feu="", boites=False, boite_prep=False):
+MOIS_COURTS = ["janv.", "févr.", "mars", "avr.", "mai", "juin", "juil.", "août", "sept.", "oct.", "nov.", "déc."]
+
+
+def _libelle_jour(d):
+    """Ex. « Lundi 16 nov. », comme dans les plans importés."""
+    return f"{JOURS_SEMAINE[d.weekday()].capitalize()} {d.day} {MOIS_COURTS[d.month - 1]}"
+
+
+_RECETTE = {"type": "object", "properties": {
+    "cle": {"type": "string", "description": "Identifiant court : minuscules, chiffres, _ ou -. Ex. curry_poulet"},
+    "titre": TEXTE, "duree": {"type": "string", "description": "Ex. 25 min"},
+    "ingredients": LISTE_TEXTES, "etapes": LISTE_TEXTES,
+    "portions": {"type": "array", "items": LISTE_TEXTES,
+                 "description": "Une ligne par aliment : [aliment, part de la 1re personne, part de la 2e, ...]"},
+    "dessert": TEXTE, "note": TEXTE, "feu": {"type": "string", "description": "Pot du feu (piment à table)"},
+    "boites": {"type": "boolean", "description": "Cuisiner 2 parts de plus pour les boîtes du lendemain"},
+    "boite_prep": {"type": "boolean", "description": "Recette de boîte préparée la veille"}},
+    "required": ["cle", "titre", "ingredients", "etapes"]}
+
+
+def _enregistrer_une_recette(r, personnes, n):
+    if not isinstance(r, dict):
+        raise ErreurOutil(f"recettes[{n}] : un objet est attendu.")
+    cle = str(r.get("cle") or "")
     if not CLE_RECETTE.match(cle):
-        raise ErreurOutil("cle : uniquement minuscules sans accent, chiffres, _ ou - (80 caractères au plus).")
-    portions = portions or []
-    personnes = Plan.actuel().personnes
+        raise ErreurOutil(f"recettes[{n}].cle {cle!r} : uniquement minuscules sans accent, chiffres, _ ou -.")
+    if not str(r.get("titre") or "").strip():
+        raise ErreurOutil(f"recette {cle} : titre manquant.")
+    portions = r.get("portions") or []
     for ligne in portions:
         if not isinstance(ligne, list) or not all(isinstance(x, str) for x in ligne):
-            raise ErreurOutil("portions : chaque ligne est une liste de textes [aliment, part 1, part 2, ...].")
+            raise ErreurOutil(f"recette {cle} : chaque ligne de portions est une liste de textes [aliment, part 1, ...].")
         if personnes and len(ligne) != len(personnes) + 1:
-            raise ErreurOutil(f"portions : chaque ligne doit avoir {len(personnes) + 1} éléments "
+            raise ErreurOutil(f"recette {cle} : chaque ligne de portions doit avoir {len(personnes) + 1} éléments "
                               f"(l'aliment puis une part pour : {', '.join(personnes)}).")
-    recette, cree = Recette.objects.update_or_create(cle=cle, defaults={
-        "titre": titre.strip(), "duree": duree, "ingredients": _textes(ingredients, "ingredients"),
-        "etapes": _textes(etapes, "etapes"), "portions": portions, "dessert": dessert, "note": note,
-        "feu": feu, "boites": boites, "boite_prep": boite_prep})
-    return {"resultat": "recette créée" if cree else "recette remplacée", "recette": _recette_complete(recette)}
+    _, cree = Recette.objects.update_or_create(cle=cle, defaults={
+        "titre": str(r["titre"]).strip(), "duree": str(r.get("duree") or ""),
+        "ingredients": _textes(r.get("ingredients") or [], f"{cle}.ingredients"),
+        "etapes": _textes(r.get("etapes") or [], f"{cle}.etapes"), "portions": portions,
+        "dessert": str(r.get("dessert") or ""), "note": str(r.get("note") or ""), "feu": str(r.get("feu") or ""),
+        "boites": bool(r.get("boites")), "boite_prep": bool(r.get("boite_prep"))})
+    return cree
+
+
+@outil("enregistrer_recettes", "Créer ou modifier des recettes",
+       "Enregistre une ou plusieurs recettes (10 au plus par appel) : création si la clé est nouvelle, sinon "
+       "remplacement. Pour un nouveau plat : l'enregistrer ici, puis le placer avec modifier_jour ou "
+       "enregistrer_semaine. Les portions suivent l'ordre de « personnes » (lire_infos_famille).",
+       {"recettes": {"type": "array", "items": _RECETTE}}, requis=["recettes"])
+def enregistrer_recettes(utilisateur, recettes):
+    if not recettes:
+        raise ErreurOutil("recettes : liste vide.")
+    if len(recettes) > 15:
+        raise ErreurOutil("15 recettes au plus par appel : découpez en plusieurs lots.")
+    personnes = Plan.actuel().personnes
+    creees = sum(_enregistrer_une_recette(r, personnes, n) for n, r in enumerate(recettes))
+    return {"resultat": f"{creees} recette(s) créée(s), {len(recettes) - creees} remplacée(s)",
+            "cles": [r["cle"] for r in recettes]}
 
 
 _CHAMPS_JOUR = {
@@ -381,36 +411,183 @@ _CHAMPS_JOUR = {
     "a_faire": {**LISTE_TEXTES, "description": "Liste « À faire » du jour (remplace l'ancienne)."},
     "remarque": {"type": "string", "description": "Note libre : repas sauté, invités… (\"\" pour effacer)."},
 }
+_TYPES_JOUR = {"midi_boite": bool, "a_faire": list}
 
 
-@outil("modifier_jour", "Modifier un jour (remplacer un repas)",
-       "Change un ou plusieurs éléments d'un jour ; les champs absents ne bougent pas. Les repas désignent des "
-       "recettes par leur clé (lister_recettes) : pour un plat nouveau, le créer d'abord avec enregistrer_recette. "
-       "Pensez ensuite à la liste de courses (lire_courses) et au « À faire » (ex. décongélation).",
-       {"date": {"type": "string", "description": "Date du jour à modifier (AAAA-MM-JJ)."}, **_CHAMPS_JOUR},
-       requis=["date"])
-def modifier_jour(utilisateur, date, **champs):
-    j = _jour(_date(date))
-    if not champs:
-        raise ErreurOutil(f"Rien à modifier : indiquez au moins un champ parmi {', '.join(_CHAMPS_JOUR)}.")
+def _appliquer_champs_jour(j, champs, contexte):
+    for champ, valeur in champs.items():
+        attendu = _TYPES_JOUR.get(champ, str)
+        if champ not in _CHAMPS_JOUR or not isinstance(valeur, attendu):
+            raise ErreurOutil(f"{contexte} : champ « {champ} » inconnu ou de mauvais type.")
     for champ in ("soir", "midi_recette", "a_preparer"):
         if champ in champs:
-            setattr(j, champ, _recette(champs[champ], champ) if champs[champ] else None)
+            setattr(j, champ, _recette(champs[champ], f"{contexte}, {champ}") if champs[champ] else None)
     if "petit_dej" in champs:
         code = champs["petit_dej"]
         j.petit_dej = PetitDej.objects.filter(code=code).first() if code else None
         if code and not j.petit_dej:
-            codes = ", ".join(PetitDej.objects.values_list("code", flat=True))
-            raise ErreurOutil(f"petit_dej : formule « {code} » inconnue (formules : {codes}).")
+            codes = ", ".join(PetitDej.objects.values_list("code", flat=True)) or "aucune"
+            raise ErreurOutil(f"{contexte} : formule de petit-déjeuner « {code} » inconnue (formules : {codes}). "
+                              "La créer avec enregistrer_petits_dejeuners.")
     for champ in ("midi_texte", "midi_detail", "gouter", "remarque"):
         if champ in champs:
             setattr(j, champ, champs[champ].strip())
     if "midi_boite" in champs:
         j.midi_boite = champs["midi_boite"]
     if "a_faire" in champs:
-        j.a_faire = _textes(champs["a_faire"], "a_faire")
+        j.a_faire = _textes(champs["a_faire"], f"{contexte}, a_faire")
+
+
+@outil("modifier_jour", "Modifier un jour (remplacer un repas)",
+       "Change un ou plusieurs éléments d'un jour existant ; les champs absents ne bougent pas. Les repas désignent "
+       "des recettes par leur clé (lister_recettes) : pour un plat nouveau, le créer d'abord avec "
+       "enregistrer_recettes. Pensez ensuite à la liste de courses (lire_courses) et au « À faire » "
+       "(ex. décongélation). Pour créer des jours, utiliser enregistrer_semaine.",
+       {"date": {"type": "string", "description": "Date du jour à modifier (AAAA-MM-JJ)."}, **_CHAMPS_JOUR},
+       requis=["date"])
+def modifier_jour(utilisateur, date, **champs):
+    j = _jour(_date(date))
+    if not champs:
+        raise ErreurOutil(f"Rien à modifier : indiquez au moins un champ parmi {', '.join(_CHAMPS_JOUR)}.")
+    _appliquer_champs_jour(j, champs, j.libelle)
     j.save()
     return {"resultat": f"{j.libelle} modifié ({', '.join(champs)})", "jour": _jour_resume(j)}
+
+
+_JOUR = {"type": "object", "properties": {
+    "date": {"type": "string", "description": "AAAA-MM-JJ"},
+    "libelle": {"type": "string", "description": "Ex. « Lundi 16 nov. » (calculé si absent)."}, **_CHAMPS_JOUR},
+    "required": ["date"]}
+
+
+@outil("enregistrer_semaine", "Créer ou mettre à jour une semaine",
+       "Crée les jours qui n'existent pas et met à jour les autres (champs absents inchangés). Sert à préparer une "
+       "nouvelle semaine ou à recopier un plan. Une semaine (7 jours au plus) par appel. Les recettes et formules "
+       "de petit-déjeuner citées doivent déjà exister (enregistrer_recettes, enregistrer_petits_dejeuners). "
+       "Penser ensuite à la liste de courses (remplacer_liste_courses).",
+       {"numero": {"type": "integer", "description": "Numéro de la semaine dans le plan (1, 2, 3…)."},
+        "libelle": {"type": "string", "description": "Ex. « 16 – 22 nov. »"},
+        "jours": {"type": "array", "items": _JOUR}},
+       requis=["numero", "jours"])
+def enregistrer_semaine(utilisateur, numero, jours, libelle=None):
+    if not jours or len(jours) > 7:
+        raise ErreurOutil("jours : de 1 à 7 jours par appel (une semaine).")
+    crees, resumes = 0, []
+    for n, d in enumerate(jours):
+        if not isinstance(d, dict) or not d.get("date"):
+            raise ErreurOutil(f"jours[{n}] : un objet avec une « date » est attendu.")
+        date = _date(d["date"], f"jours[{n}].date")
+        j = Jour.objects.filter(date=date).first()
+        if not j:
+            j = Jour(date=date, semaine=numero, libelle=_libelle_jour(date))
+            crees += 1
+        j.semaine = numero
+        if libelle is not None:
+            j.semaine_libelle = libelle
+        if d.get("libelle"):
+            j.libelle = d["libelle"].strip()
+        _appliquer_champs_jour(j, {k: v for k, v in d.items() if k not in ("date", "libelle") and v is not None},
+                               j.libelle)
+        j.save()
+        resumes.append(f"{j.libelle} : {j.soir.titre if j.soir else '(pas de soir)'}")
+    plan = Plan.actuel()
+    premier = Jour.objects.first()
+    if premier and plan.debut != premier.date:
+        plan.debut = premier.date
+        plan.save(update_fields=["debut"])
+    return {"resultat": f"Semaine {numero} : {crees} jour(s) créé(s), {len(jours) - crees} mis à jour",
+            "soirs": resumes}
+
+
+@outil("supprimer_jours", "Supprimer des jours du plan",
+       "Supprime les jours compris entre deux dates (incluses), par exemple une semaine passée ou annulée. "
+       "Les recettes et les listes de courses ne sont pas touchées.",
+       {"du": {"type": "string", "description": "AAAA-MM-JJ"}, "au": {"type": "string", "description": "AAAA-MM-JJ"}},
+       requis=["du", "au"], destructif=True)
+def supprimer_jours(utilisateur, du, au):
+    debut, fin = _date(du, "du"), _date(au, "au")
+    if fin < debut:
+        raise ErreurOutil("« au » doit être après « du ».")
+    n, _ = Jour.objects.filter(date__gte=debut, date__lte=fin).delete()
+    return {"resultat": f"{n} jour(s) supprimé(s) du {debut.isoformat()} au {fin.isoformat()}"}
+
+
+_FORMULE = {"type": "object", "properties": {
+    "code": {"type": "string", "description": "Une lettre ou un code court, ex. A"},
+    "titre": TEXTE, "jours": {"type": "string", "description": "Ex. « mardi et vendredi »"},
+    "lignes": {"type": "array", "items": LISTE_TEXTES,
+               "description": "[aliment, part de la 1re personne, part de la 2e, ...]"},
+    "preparation": TEXTE}, "required": ["code", "titre", "lignes"]}
+
+
+@outil("enregistrer_petits_dejeuners", "Créer ou modifier des formules de petit-déjeuner",
+       "Enregistre une ou plusieurs formules (création si le code est nouveau, sinon remplacement).",
+       {"formules": {"type": "array", "items": _FORMULE}}, requis=["formules"])
+def enregistrer_petits_dejeuners(utilisateur, formules):
+    if not formules:
+        raise ErreurOutil("formules : liste vide.")
+    codes = []
+    for n, f in enumerate(formules):
+        if not isinstance(f, dict) or not str(f.get("code") or "").strip() or len(str(f["code"]).strip()) > 4:
+            raise ErreurOutil(f"formules[{n}] : « code » obligatoire (4 caractères au plus).")
+        lignes = f.get("lignes") or []
+        if not isinstance(lignes, list) or not all(isinstance(l, list) for l in lignes):
+            raise ErreurOutil(f"formule {f['code']} : « lignes » est une liste de lignes [aliment, parts…].")
+        code = str(f["code"]).strip()
+        PetitDej.objects.update_or_create(code=code, defaults={
+            "titre": str(f.get("titre") or code), "jours": str(f.get("jours") or ""), "lignes": lignes,
+            "preparation": str(f.get("preparation") or "")})
+        codes.append(code)
+    return {"resultat": f"Formule(s) enregistrée(s) : {', '.join(codes)}"}
+
+
+def _texte_en_html(texte):
+    """Texte simple → cartes de l'onglet Infos : « ## Titre » ouvre une carte, « - » fait une liste."""
+    from django.utils.html import escape
+    cartes, liste = [], False
+    for ligne in texte.splitlines():
+        ligne = ligne.strip()
+        if liste and not ligne.startswith("- "):
+            cartes[-1] += "</ul>"
+            liste = False
+        if not ligne:
+            continue
+        if ligne.startswith("#"):
+            cartes.append(f'<div class="card"><h3>{escape(ligne.lstrip("#").strip())}</h3>')
+            continue
+        if not cartes:
+            cartes.append('<div class="card">')
+        if ligne.startswith("- "):
+            if not liste:
+                cartes[-1] += '<ul class="rules">'
+                liste = True
+            cartes[-1] += f"<li>{escape(ligne[2:])}</li>"
+        else:
+            cartes[-1] += f"<p>{escape(ligne)}</p>"
+    if liste:
+        cartes[-1] += "</ul>"
+    return "".join(c + "</div>" for c in cartes)
+
+
+@outil("modifier_infos_famille", "Modifier les personnes et les consignes",
+       "Change l'ordre des personnes (colonnes des portions) et/ou le contenu de l'onglet Infos (principe, "
+       "allergies, repères de portions…). « infos » : texte simple (« ## Titre » pour une rubrique, « - » pour une "
+       "puce) ou HTML. Remplace l'onglet en entier : partir de lire_infos_famille pour ne rien perdre. "
+       "Réservé aux comptes « équipe ».",
+       {"personnes": {**LISTE_TEXTES, "description": "Ex. [\"Parent 1\", \"Parent 2\", \"Enfant 1\", \"Enfant 2\"]"},
+        "infos": TEXTE})
+def modifier_infos_famille(utilisateur, personnes=None, infos=None):
+    if not utilisateur.is_staff:
+        raise ErreurOutil("Seul un compte « équipe » peut modifier les personnes et les consignes.")
+    if personnes is None and infos is None:
+        raise ErreurOutil("Indiquez « personnes » et/ou « infos ».")
+    plan = Plan.actuel()
+    if personnes is not None:
+        plan.personnes = _textes(personnes, "personnes")
+    if infos is not None:
+        plan.infos_html = infos if re.search(r"<\w+[^>]*>", infos) else _texte_en_html(infos)
+    plan.save()
+    return {"resultat": "Infos de la famille mises à jour", "personnes": plan.personnes}
 
 
 # --------------------------------------------------------------------------- courses
@@ -528,6 +705,15 @@ def remplacer_liste_courses(utilisateur, date_courses, magasins, libelle=None, p
                 gardes += bool(coche)
     return {"resultat": f"Liste du {liste.libelle} : {total} article(s), dont {gardes} déjà coché(s)",
             "date_courses": d.isoformat()}
+
+
+@outil("supprimer_liste_courses", "Supprimer une liste de courses",
+       "Supprime la liste de courses de cette date et tous ses articles.",
+       {"date_courses": {"type": "string", "description": "AAAA-MM-JJ"}}, requis=["date_courses"], destructif=True)
+def supprimer_liste_courses(utilisateur, date_courses):
+    liste = _liste(date_courses)
+    liste.delete()
+    return {"resultat": f"Liste du {liste.libelle} supprimée"}
 
 
 # --------------------------------------------------------------------------- frigo

@@ -260,8 +260,14 @@ class McpTests(TestCase):
         erreur, message = self.outil(jeton, "modifier_jour", date="2026-11-16", soir="inconnue")
         self.assertTrue(erreur)
         self.assertIn("n'existe pas", message)
-        erreur, _ = self.outil(jeton, "enregistrer_recette", cle="omelette", titre="Omelette", ingredients=["6 œufs"],
-                               etapes=["Battre", "Cuire"], portions=[["Omelette", "2", "2", "1", "1"]])
+        erreur, message = self.outil(jeton, "enregistrer_recettes", recettes=[
+            {"cle": "omelette", "titre": "Omelette", "ingredients": ["6 œufs"], "etapes": ["Battre", "Cuire"],
+             "portions": [["Omelette", "2", "2"]]}])
+        self.assertTrue(erreur)  # une part par personne (4 personnes) attendue
+        self.assertIn("5 éléments", message)
+        erreur, _ = self.outil(jeton, "enregistrer_recettes", recettes=[
+            {"cle": "omelette", "titre": "Omelette", "ingredients": ["6 œufs"], "etapes": ["Battre", "Cuire"],
+             "portions": [["Omelette", "2", "2", "1", "1"]]}])
         self.assertFalse(erreur)
         erreur, _ = self.outil(jeton, "modifier_jour", date="2026-11-16", soir="omelette", remarque="curry reporté")
         self.assertFalse(erreur)
@@ -336,3 +342,83 @@ class McpTests(TestCase):
         r = self.client.post("/mcp", data="{}", content_type="application/json", HTTP_ORIGIN="https://pirate.example",
                              HTTP_AUTHORIZATION=f"Bearer {jeton}")
         self.assertEqual(r.status_code, 403)
+
+
+class McpConstruirePlanTests(TestCase):
+    """Ce que fait Claude pour recopier un menu préparé dans une conversation, en partant d'une appli vide."""
+
+    connecter, rpc, outil = McpTests.connecter, McpTests.rpc, McpTests.outil
+
+    def setUp(self):
+        self.parent1 = User.objects.create_user("parent1", password="motdepasse-test", first_name="Parent 1")
+        self.parent2 = User.objects.create_user("parent2", password="motdepasse-test", is_staff=True)
+
+    def test_recopier_un_plan_outil_par_outil(self):
+        jeton = self.connecter(self.parent2)["access_token"]
+        _, infos = self.outil(jeton, "lire_infos_famille")
+        self.assertEqual(infos["semaines"], [])
+        erreur, _ = self.outil(jeton, "modifier_infos_famille", personnes=PLAN["personnes"],
+                               infos="## Le principe\n- Même plat pour les 4\n- Le piment se met à table\n\n## Sport\nMarche.")
+        self.assertFalse(erreur)
+        erreur, _ = self.outil(jeton, "enregistrer_petits_dejeuners", formules=[
+            {"code": code, "titre": f["t"], "jours": f["days"], "lignes": f["rows"]}
+            for code, f in PLAN["petits_dejeuners"].items()])
+        self.assertFalse(erreur)
+        erreur, resultat = self.outil(jeton, "enregistrer_recettes", recettes=[
+            {"cle": cle, "titre": r["t"], "duree": r["time"], "ingredients": r["ing"], "etapes": r["steps"],
+             "portions": r["por"], "boites": r.get("boxes", False), "dessert": r.get("des") or ""}
+            for cle, r in PLAN["recettes"].items()])
+        self.assertFalse(erreur, resultat)
+        semaine = PLAN["semaines"][0]
+        erreur, resultat = self.outil(jeton, "enregistrer_semaine", numero=semaine["n"], libelle=semaine["label"], jours=[
+            {"date": d["iso"], "libelle": d["full"], "petit_dej": d["pdj"] or "", "soir": d["soir"],
+             "midi_texte": d["midi"].get("lbl", ""), "midi_detail": d["midi"].get("sub", ""),
+             "midi_recette": d["midi"].get("r", ""), "midi_boite": bool(d["midi"].get("box")),
+             "gouter": d["gouter"] or "", "a_faire": d["todo"]} for d in semaine["days"]])
+        self.assertFalse(erreur, resultat)
+        liste = PLAN["listes"][0]
+        erreur, resultat = self.outil(jeton, "remplacer_liste_courses", date_courses=liste["shop"], libelle=liste["label"],
+                                      periode=liste["range"], magasins={
+            magasin: [{"rayon": c["c"], "articles": [{"nom": i[0], "quantite": i[1], "commentaire": i[2],
+                                                      "congeler": bool(i[3]), "verifier": bool(i[4])} for i in c["items"]]}
+                      for c in categories] for magasin, categories in liste["shops"].items()})
+        self.assertFalse(erreur, resultat)
+
+        # Le résultat est le même qu'un import du fichier, et l'appli l'affiche.
+        self.assertEqual(Jour.objects.count(), 2)
+        self.assertEqual(Article.objects.count(), 3)
+        mardi = Jour.objects.get(date="2026-11-17")
+        self.assertEqual((mardi.soir.cle, mardi.midi_recette.cle, mardi.midi_boite, mardi.semaine_libelle),
+                         ("soupe", "curry", True, "16 – 22 nov."))
+        self.client.force_login(self.parent1)
+        self.assertContains(self.client.get("/jour/2026-11-16/"), "Curry de poulet")
+        infos = self.client.get("/infos/")
+        self.assertContains(infos, "<h3>Le principe</h3>", html=False)
+        self.assertContains(infos, "Même plat pour les 4")
+        self.assertContains(self.client.get("/courses/"), "Poulet")
+
+    def test_semaine_modifiee_puis_supprimee(self):
+        jeton = self.connecter(self.parent1)["access_token"]
+        self.outil(jeton, "enregistrer_recettes", recettes=[{"cle": "soupe", "titre": "Soupe", "ingredients": [],
+                                                             "etapes": []}])
+        erreur, message = self.outil(jeton, "enregistrer_semaine", numero=5, jours=[{"date": "2026-12-14", "soir": "inconnue"}])
+        self.assertTrue(erreur)
+        self.assertFalse(Jour.objects.exists())  # rien n'est enregistré à moitié
+        self.outil(jeton, "enregistrer_semaine", numero=5, jours=[{"date": "2026-12-14", "soir": "soupe"}])
+        self.assertEqual(Jour.objects.get().libelle, "Lundi 14 déc.")
+        self.outil(jeton, "enregistrer_semaine", numero=5, jours=[{"date": "2026-12-14", "gouter": "1 pomme"}])
+        j = Jour.objects.get()
+        self.assertEqual((j.soir.cle, j.gouter), ("soupe", "1 pomme"))  # le soir n'a pas bougé
+        erreur, message = self.outil(jeton, "enregistrer_semaine", numero=5, jours=[{"date": "2026-12-14", "dessert": "x"}])
+        self.assertIn("inconnu", message)
+        erreur, _ = self.outil(jeton, "modifier_infos_famille", personnes=["A"])
+        self.assertTrue(erreur)  # réservé à l'équipe
+        self.outil(jeton, "supprimer_jours", du="2026-12-14", au="2026-12-20")
+        self.assertFalse(Jour.objects.exists())
+
+    def test_supprimer_une_liste(self):
+        importer_plan(copy.deepcopy(PLAN))
+        jeton = self.connecter(self.parent1)["access_token"]
+        self.outil(jeton, "supprimer_liste_courses", date_courses="2026-11-16")
+        self.assertFalse(ListeCourses.objects.exists())
+        self.assertFalse(Article.objects.exists())
