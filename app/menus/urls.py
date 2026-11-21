@@ -16,6 +16,7 @@ urlpatterns = [
     path("article/<int:article_id>/cocher/", views.article_cocher, name="article_cocher"),
     path("frigo/", views.frigo, name="frigo"),
     path("frigo/<int:reste_id>/retirer/", views.frigo_retirer, name="frigo_retirer"),
+    path("plus/", views.plus, name="plus"),
     path("infos/", views.infos, name="infos"),
     path("export.json", views.exporter, name="exporter"),
     path("plan/", views.plan, name="plan"),

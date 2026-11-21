@@ -1,72 +1,80 @@
 {% extends "menus/base.html" %}{% load static %}
 {% block titre %}{{ j.libelle }} · Menus{% endblock %}
 {% block contenu %}
-<div class="weeks" aria-label="Semaines">
-  {% for s in semaines %}<a href="{% url 'jour' s.date|date:'Y-m-d' %}" class="{% if s.semaine == j.semaine %}on{% endif %}"><b>Semaine {{ s.semaine }}</b><span>{{ s.semaine_libelle }}</span></a>{% endfor %}
-</div>
-<div class="days" aria-label="Jours">
-  {% for d in jours %}<a href="{% url 'jour' d.date|date:'Y-m-d' %}" class="{% if d.date == j.date %}on{% endif %}"><b>{{ d.date|date:'j' }}</b><span>{{ d.date|date:'D' }}</span></a>{% endfor %}
+<div class="entete-jour">
+  {% if precedent %}<a class="fleche" href="{% url 'jour' precedent.date|date:'Y-m-d' %}" aria-label="Jour précédent">‹</a>{% else %}<span class="fleche"></span>{% endif %}
+  <div>
+    <h1>{{ j.libelle }}</h1>
+    <p class="sous-titre">{% if j.date == aujourdhui %}Aujourd'hui{% else %}<a href="{% url 'accueil' %}">Revenir à aujourd'hui</a>{% endif %} · Semaine {{ j.semaine }}</p>
+  </div>
+  {% if suivant %}<a class="fleche" href="{% url 'jour' suivant.date|date:'Y-m-d' %}" aria-label="Jour suivant">›</a>{% else %}<span class="fleche"></span>{% endif %}
 </div>
 
-<h2>{{ j.libelle }}</h2>
+<nav class="days" aria-label="Jours du plan">
+  {% for d in jours %}<a href="{% url 'jour' d.date|date:'Y-m-d' %}" class="{% if d.date == j.date %}on{% endif %}{% if d.nouvelle_semaine %} sem{% endif %}{% if d.date == aujourdhui %} auj{% endif %}"{% if d.date == j.date %} aria-current="date"{% endif %}><span>{{ d.date|date:'D'|slice:':3' }}</span><b>{{ d.date|date:'j' }}</b></a>{% endfor %}
+</nav>
+
+{% if j.a_faire %}<div class="todo"><b>À faire</b><ul>{% for t in j.a_faire %}<li>{{ t }}</li>{% endfor %}</ul></div>{% endif %}
+
+{% if j.remarque %}<div class="remarque" data-replier><p>{{ j.remarque|linebreaksbr }}</p></div>{% endif %}
 
 {% if personnes %}
-<div class="qui" id="qui-mange" data-jour="{{ j.date|date:'Y-m-d' }}">
-  <span class="qui-titre">Qui mange ?</span>
+<details class="qui" id="qui-mange" data-jour="{{ j.date|date:'Y-m-d' }}">
+  <summary><span class="slot">Pour</span><span id="qui-resume">{{ personnes|length }} personnes</span><span class="chev" aria-hidden="true">›</span></summary>
   <div class="qui-choix">
     {% for p in personnes %}<button type="button" class="chip" data-p="{{ forloop.counter0 }}" aria-pressed="true">{{ p }}</button>{% endfor %}
     <button type="button" class="chip chip-boite" data-boites aria-pressed="true">Boîtes de demain</button>
   </div>
-  <p class="qui-aide">Touchez un prénom pour le retirer : les tableaux n'affichent plus sa part, et la colonne « Total » donne les quantités pour les présents.</p>
-</div>
+  <p class="qui-aide">Touchez un prénom pour retirer sa part des recettes du jour ; la colonne « Total » s'adapte.</p>
+</details>
 {% endif %}
 
-{% if j.remarque %}<div class="remarque"><b>Remarque :</b> {{ j.remarque|linebreaksbr }}</div>{% endif %}
-
-{% if j.a_faire %}<div class="todo"><b>À faire</b><ul>{% for t in j.a_faire %}<li>{{ t }}</li>{% endfor %}</ul></div>{% endif %}
-
+<div class="repas">
 {% if j.petit_dej %}
-<details class="meal"><summary><span class="slot">Petit-déj</span><span class="what">{{ j.petit_dej.code }} · {{ j.petit_dej.titre }}</span><span class="chev" aria-hidden="true">›</span></summary>
+<details class="meal"><summary><span class="slot">Petit-déj</span><span class="what">{{ j.petit_dej.titre }}<small>Formule {{ j.petit_dej.code }}</small></span><span class="chev" aria-hidden="true">›</span></summary>
   <div class="body">{% include "menus/_tableau.html" with lignes=j.petit_dej.lignes %}{% if j.petit_dej.preparation %}<p class="note">{{ j.petit_dej.preparation }}</p>{% endif %}</div>
 </details>
 {% endif %}
 
 {% if j.midi_recette %}
 <details class="meal"><summary><span class="slot">Midi</span>
-  <span class="what">{% if j.midi_boite %}{{ j.midi_texte }}<small>{{ j.midi_detail }}</small>{% else %}{{ j.midi_recette.titre }}{% if j.midi_recette.dessert %}<small>{{ j.midi_recette.dessert_court }}</small>{% endif %}{% endif %}</span>
+  <span class="what">{% if j.midi_boite %}{{ j.midi_texte }}{% if j.midi_detail %}<small>{{ j.midi_detail }}</small>{% endif %}{% else %}{{ j.midi_recette.titre }}{% if j.midi_recette.dessert %}<small>{{ j.midi_recette.dessert_court }}</small>{% endif %}{% endif %}</span>
   <span class="chev" aria-hidden="true">›</span></summary>
   {% include "menus/_recette.html" with r=j.midi_recette %}
 </details>
 {% elif j.midi_texte %}
-<div class="meal"><div class="head"><span class="slot">Midi</span><span class="what">{{ j.midi_texte }}{% if j.midi_detail %}<small>{{ j.midi_detail }}</small>{% endif %}</span><span></span></div></div>
+<div class="meal"><div class="head"><span class="slot">Midi</span><span class="what">{{ j.midi_texte }}{% if j.midi_detail %}<small>{{ j.midi_detail }}</small>{% endif %}</span></div></div>
 {% endif %}
 
 {% if j.gouter %}
-<div class="meal"><div class="head"><span class="slot">Goûter</span><span class="what">{{ j.gouter }}<small>Pour chaque enfant</small></span><span></span></div></div>
+<div class="meal"><div class="head"><span class="slot">Goûter</span><span class="what">{{ j.gouter }}<small>Pour chaque enfant</small></span></div></div>
 {% endif %}
 
 {% if j.soir %}
-<details class="meal" open><summary><span class="slot">Soir</span>
-  <span class="what">{{ j.soir.titre }}<small>{% if j.soir.boites %}+ 2 boîtes pour demain{% if j.soir.dessert %} · {% endif %}{% endif %}{{ j.soir.dessert_court }}</small></span>
+<details class="meal soir"><summary><span class="slot">Soir</span>
+  <span class="what">{{ j.soir.titre }}<small>{% if j.soir.duree %}{{ j.soir.duree }}{% endif %}{% if j.soir.boites %} · + 2 boîtes pour demain{% endif %}</small></span>
   <span class="chev" aria-hidden="true">›</span></summary>
-  {% include "menus/_recette.html" with r=j.soir %}
+  {% include "menus/_recette.html" with r=j.soir duree_affichee=True %}
 </details>
 {% endif %}
 
 {% if j.a_preparer %}
-<details class="meal prep"><summary><span class="slot">Pour demain</span><span class="what">Boîte du lundi : {{ j.a_preparer.titre }}<small>À préparer ce soir</small></span><span class="chev" aria-hidden="true">›</span></summary>
+<details class="meal prep"><summary><span class="slot">Pour demain</span><span class="what">{{ j.a_preparer.titre }}<small>Boîte à préparer ce soir</small></span><span class="chev" aria-hidden="true">›</span></summary>
   {% include "menus/_recette.html" with r=j.a_preparer %}
 </details>
 {% endif %}
+</div>
 
-{% include "menus/_bouton_claude.html" with texte="Modifier avec Claude" %}
 
-<details class="meal"><summary><span class="slot">Note</span><span class="what">{% if j.remarque %}Modifier la remarque{% else %}Ajouter une remarque{% endif %}<small>Repas sauté, invités, changement…</small></span><span class="chev" aria-hidden="true">›</span></summary>
-  <div class="body"><form method="post" action="{% url 'jour_remarque' j.date|date:'Y-m-d' %}" class="form" style="margin-top:12px">{% csrf_token %}
-    <textarea name="remarque" rows="3" placeholder="Ex. : curry pas fait, reporté à jeudi">{{ j.remarque }}</textarea>
-    <button class="btn" type="submit">Enregistrer</button>
-  </form></div>
-</details>
+<div class="actions">
+  {% include "menus/_bouton_claude.html" with texte="Modifier avec Claude" %}
+  <details class="lien-remarque"><summary>✎ {% if j.remarque %}Modifier la remarque{% else %}Ajouter une remarque{% endif %}</summary>
+    <form method="post" action="{% url 'jour_remarque' j.date|date:'Y-m-d' %}" class="form">{% csrf_token %}
+      <textarea name="remarque" rows="3" placeholder="Ex. : curry pas fait, reporté à jeudi">{{ j.remarque }}</textarea>
+      <button class="btn" type="submit">Enregistrer</button>
+    </form>
+  </details>
+</div>
 {% endblock %}
-
+{% block pied %}{% include "menus/_version.html" %}{% endblock %}
 {% block scripts %}<script src="{% static 'menus/portions.js' %}"></script>{% endblock %}

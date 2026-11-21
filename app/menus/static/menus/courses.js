@@ -22,6 +22,31 @@
   function afficher(box, coche) {
     box.checked = coche;
     box.closest(".item").classList.toggle("done", coche);
+    majMasquage();
+  }
+
+  // « Masquer les articles cochés » : choix gardé sur ce téléphone.
+  const masquer = document.getElementById("masquer-faits");
+  function majMasquage() {
+    if (!masquer) return;
+    ticket.classList.toggle("masquer-faits", masquer.checked);
+    let rayon = null, visibles = 0, total = 0;
+    const finRayon = () => { if (rayon) rayon.hidden = masquer.checked && rayon._visibles === 0; };
+    ticket.querySelectorAll(".cat, .item").forEach(el => {
+      if (el.classList.contains("cat")) { finRayon(); rayon = el; rayon._visibles = 0; return; }
+      total++;
+      if (!el.classList.contains("done") || el.classList.contains("juste")) { visibles++; if (rayon) rayon._visibles++; }
+    });
+    finRayon();
+    const fini = ticket.querySelector(".tout-fait");
+    if (fini) fini.hidden = !(masquer.checked && total > 0 && visibles === 0);
+  }
+  if (masquer) {
+    try { masquer.checked = localStorage.getItem("menus-masquer-faits") === "1"; } catch (e) { /* rien */ }
+    masquer.addEventListener("change", () => {
+      try { localStorage.setItem("menus-masquer-faits", masquer.checked ? "1" : "0"); } catch (e) { /* rien */ }
+      majMasquage();
+    });
   }
 
   function majCompteurs(articles) {
@@ -53,6 +78,10 @@
   ticket.addEventListener("change", async e => {
     const box = e.target;
     if (box.type !== "checkbox") return;
+    // Une case qu'on vient de cocher reste visible un instant (on peut se raviser).
+    const item = box.closest(".item");
+    item.classList.add("juste");
+    setTimeout(() => { item.classList.remove("juste"); majMasquage(); }, 1500);
     afficher(box, box.checked);
     file.ajouter(box.id.slice(1), box.dataset.url, box.checked);
     const { restants } = await file.envoyer();
@@ -96,6 +125,7 @@
     }
   }));
 
+  majMasquage();
   appliquerAttente();
   relire();
   setInterval(relire, 8000);

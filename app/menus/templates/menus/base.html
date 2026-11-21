@@ -2,7 +2,17 @@
 <html lang="fr">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<script>
+// Téléphone en mode « version pour ordinateur » : la page serait affichée en
+// miniature. On la remet à l'échelle du téléphone.
+(function () {
+  var w = window.innerWidth, s = window.screen && window.screen.width;
+  if (s && s < 600 && w > s * 1.4 && window.matchMedia && matchMedia("(pointer: coarse)").matches) {
+    document.documentElement.style.zoom = (w / s).toFixed(3);
+  }
+})();
+</script>
 <meta name="theme-color" content="#1f3d31">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
@@ -16,27 +26,24 @@
 <link href="https://fonts.googleapis.com/css2?family=Gloock&family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="{% static 'menus/app.css' %}">
 </head>
-<body>
-<header>
-  <div class="top">
-    <h1><a href="{% url 'accueil' %}" style="text-decoration:none">Menus de la semaine</a></h1>
-    {% if user.is_authenticated %}<span class="who">{{ user.first_name|default:user.username }}{% if user.is_staff %} · <a href="{% url 'plan' %}">Plan</a>{% endif %}</span>{% endif %}
-  </div>
-  {% if user.is_authenticated %}
-  <nav class="tabs" aria-label="Rubriques">
-    <a href="{% url 'accueil' %}" class="{% if onglet == 'semaine' %}on{% endif %}">Semaine</a>
-    <a href="{% url 'petit_dej' %}" class="{% if onglet == 'petit-dej' %}on{% endif %}">Petit-déj</a>
-    <a href="{% url 'courses' %}" class="{% if onglet == 'courses' %}on{% endif %}">Courses</a>
-    <a href="{% url 'frigo' %}" class="{% if onglet == 'frigo' %}on{% endif %}">Frigo</a>
-    <a href="{% url 'infos' %}" class="{% if onglet == 'infos' %}on{% endif %}">Infos</a>
-  </nav>
-  {% endif %}
-</header>
+<body{% if user.is_authenticated %} class="avec-barre"{% endif %}>
 <main>
   {% for m in messages %}<div class="msg{% if m.level_tag == 'error' %} error{% endif %}">{{ m }}</div>{% endfor %}
   {% block contenu %}{% endblock %}
+  {% block pied %}{% endblock %}
 </main>
-{% with v=version_appli %}<footer class="version">Version {% if v.date %}du {{ v.date|date:"j F Y à H:i" }}{% else %}de développement{% endif %} · {{ v.code }} · démarrée le {{ v.demarree_le|date:"j F à H:i" }}</footer>{% endwith %}
+{% if user.is_authenticated %}
+<nav class="barre" aria-label="Rubriques">
+  <a href="{% url 'accueil' %}"{% if onglet == 'jour' %} aria-current="page"{% endif %}>
+    <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg>Menus</a>
+  <a href="{% url 'courses' %}"{% if onglet == 'courses' %} aria-current="page"{% endif %}>
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 4h2.5l2.2 11h10.6L20.5 7.5H6.4"/><circle cx="9.5" cy="19" r="1.4"/><circle cx="17" cy="19" r="1.4"/></svg>Courses</a>
+  <a href="{% url 'frigo' %}"{% if onglet == 'frigo' %} aria-current="page"{% endif %}>
+    <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5.5" y="2.5" width="13" height="19" rx="2.5"/><path d="M5.5 9.5h13M9 5.5v2M9 12.5v3"/></svg>Frigo</a>
+  <a href="{% url 'plus' %}"{% if onglet == 'plus' %} aria-current="page"{% endif %}>
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6.5h16M4 12h16M4 17.5h16"/></svg>Plus</a>
+</nav>
+{% endif %}
 <script src="{% static 'menus/appli.js' %}"></script>
 <script src="{% static 'menus/claude.js' %}"></script>
 {% block scripts %}{% endblock %}

@@ -1,7 +1,7 @@
 {% extends "menus/base.html" %}
 {% block titre %}Plan · Menus{% endblock %}
 {% block contenu %}
-<h2>Gérer le plan</h2>
+<h1>Gérer le plan</h1>
 {% if vide %}<div class="msg">Aucun plan pour l'instant. Importez votre fichier de menus (JSON) pour commencer.</div>{% endif %}
 
 <div class="card">
@@ -25,6 +25,4 @@
   </form>
 </div>
 
-<p class="small"><a href="{% url 'admin:index' %}">Administration</a> : comptes (créer celui de votre conjoint·e), corrections à la main. · <a href="{% url 'logout' %}" onclick="event.preventDefault();document.getElementById('deco').submit()">Se déconnecter</a></p>
-<form id="deco" method="post" action="{% url 'logout' %}" hidden>{% csrf_token %}</form>
 {% endblock %}

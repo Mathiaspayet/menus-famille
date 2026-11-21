@@ -2,33 +2,38 @@
 {% load static %}
 {% block titre %}Courses · Menus{% endblock %}
 {% block contenu %}
-<h2>Courses</h2>
-<div class="weeks" aria-label="Listes">
-  {% for l in listes %}<a href="{% url 'courses_liste' l.id %}?magasin={{ magasin }}" class="{% if l.id == liste.id %}on{% endif %}"><b>{{ l.libelle }}</b><span>Liste {{ forloop.counter }}</span></a>{% endfor %}
-</div>
-<div class="card answer"><h3>Liste du {{ liste.libelle }}</h3>
-  <p>Elle couvre {{ liste.periode }}, petits-déjeuners, boîtes et goûters compris.</p>
+<h1>Courses</h1>
+<nav class="listes" aria-label="Listes de courses">
+  {% for l in listes %}<a href="{% url 'courses_liste' l.id %}?magasin={{ magasin }}"{% if l.id == liste.id %} aria-current="page"{% endif %}>{{ l.libelle }}</a>{% endfor %}
+</nav>
+<details class="infos-liste"><summary><span>Couvre {{ liste.periode }}</span><span class="chev" aria-hidden="true">›</span></summary>
   <ol><li><b>Congelez</b> en rentrant les viandes marquées « À congeler ».</li>
   <li>Les poissons et crevettes prévus après le jour des courses s'achètent <b>surgelés</b>.</li>
   <li><b>Chaque soir, sortez ce qui est prévu le lendemain</b> et mettez-le au frigo.</li></ol>
-  <p class="small">Les cases cochées sont partagées : ce que l'un coche, l'autre le voit.</p>
+  <p class="small">{{ conseil }} Les cases cochées sont partagées : ce que l'un coche, l'autre le voit.</p>
+</details>
+
+<div class="magasins">
+  <div class="shops" aria-label="Magasins">
+    {% for c in compteurs %}<a href="?magasin={{ c.code }}"{% if c.code == magasin %} class="on" aria-current="page"{% endif %} data-shop="{{ c.code }}"><b>{{ c.nom }}</b><span>{{ c.faits }} / {{ c.total }}</span></a>{% endfor %}
+  </div>
+  <label class="masquer"><input type="checkbox" id="masquer-faits"> Masquer les articles cochés</label>
 </div>
-<div class="shops" aria-label="Magasins">
-  {% for c in compteurs %}<a href="?magasin={{ c.code }}" class="{% if c.code == magasin %}on{% endif %}" data-shop="{{ c.code }}"><b>{{ c.nom }}</b><span>{{ c.faits }} / {{ c.total }}</span></a>{% endfor %}
-</div>
+
 <div class="ticket" id="ticket" data-etat="{% url 'courses_etat' liste.id %}" data-magasin="{{ magasin }}">
   {% for cat in categories %}
-    <div class="cat">{{ cat.nom }}</div>
+    <h2 class="cat">{{ cat.nom }}</h2>
     {% for a in cat.articles %}
     <div class="item{% if a.coche %} done{% endif %}">
       <input type="checkbox" id="a{{ a.id }}" data-url="{% url 'article_cocher' a.id %}"{% if a.coche %} checked{% endif %}>
-      <label for="a{{ a.id }}">{{ a.nom }}{% if a.verifier %}<span class="a">Vérifier</span>{% endif %}{% if a.commentaire %}<span class="c{% if a.congeler %} frz{% endif %}">{{ a.commentaire }}</span>{% endif %}</label>
+      <label for="a{{ a.id }}"><span class="n">{{ a.nom }}{% if a.verifier %}<span class="a">Vérifier</span>{% endif %}</span>{% if a.commentaire %}<span class="c{% if a.congeler %} frz{% endif %}">{{ a.commentaire }}</span>{% endif %}</label>
       <span class="q">{{ a.quantite }}</span>
     </div>
     {% endfor %}
   {% empty %}<p class="small">Rien à acheter dans ce magasin pour cette liste.</p>
   {% endfor %}
-  <div class="bar"><span class="small">{{ conseil }}</span>
+  <p class="tout-fait" hidden>Tout est coché dans ce magasin ✓</p>
+  <div class="bar">
     <form method="post" action="{% url 'courses_decocher' liste.id %}" onsubmit="return confirm('Décocher tous les articles de ce magasin ?')">{% csrf_token %}
       <input type="hidden" name="magasin" value="{{ magasin }}"><button type="submit">Tout décocher</button></form>
   </div>

@@ -117,6 +117,15 @@
     });
     document.querySelectorAll(".note-boites").forEach(n => { n.hidden = !etat.boites; });
     barre.classList.toggle("modifie", etat.absents.length > 0 || !etat.boites);
+    // Résumé sur une ligne (« 3 personnes (sans Marine) · sans boîtes »), visible sans ouvrir le choix.
+    const resume = document.getElementById("qui-resume");
+    if (resume) {
+      const noms = Array.from(barre.querySelectorAll(".chip[data-p]")).map(b => b.textContent.trim());
+      const n = nbPersonnes - etat.absents.length;
+      resume.textContent = `${n} personne${n > 1 ? "s" : ""}`
+        + (etat.absents.length ? ` (sans ${etat.absents.map(i => noms[i]).join(", ")})` : "")
+        + (etat.boites ? "" : " · sans les boîtes");
+    }
   }
 
   barre.addEventListener("click", e => {

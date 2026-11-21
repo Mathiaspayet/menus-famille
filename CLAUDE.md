@@ -47,6 +47,12 @@ rattache par l'étiquette `com.centurylinklabs.watchtower.scope=gestion-locative
 - Serveur MCP : les descriptions d'outils et les `INSTRUCTIONS` (`mcp.py`) restent
   génériques (dépôt public) ; les données familiales viennent de la base. Tout nouvel
   outil va dans `mcp_outils.py` avec son test dans `tests.py` (classe `McpTests`).
+- Interface pensée **d'abord pour le téléphone** (l'utilisateur la juge sur son
+  téléphone) : texte de base 17 px, barre de navigation en bas (`base.html` :
+  Menus · Courses · Frigo · Plus), une seule colonne, l'essentiel visible et le
+  détail replié (recettes, « Pour… », remarque, conseils des courses). Petit-déj,
+  Infos et Plan sont dans la page « Plus ». Vérifier chaque changement visuel par
+  une capture à la taille d'un téléphone (Playwright, appareil « Pixel 7 »).
 - Hors connexion : `sw.js` ne doit jamais garder en copie `/mcp`, `/oauth/`, `/admin/`,
   `/connexion/`… (liste `JAMAIS`). Une nouvelle page qui modifie des données doit
   rester accessible uniquement en ligne.
@@ -84,7 +90,7 @@ app/menus/
   mcp_outils.py    les outils proposés à Claude (lire_jour, modifier_jour,
                    enregistrer_semaine, enregistrer_recettes, …)
   oauth.py         connexion OAuth 2.1 de Claude (découverte, DCR, PKCE, jetons)
-  context_processors.py   version affichée en bas des pages
+  context_processors.py   version affichée (bas de la page du jour et de « Plus »)
   tests.py
 docs/FORMAT_PLAN.md   format du fichier de plan
 docs/MCP.md           connecter Claude (pas à pas) et liste des outils

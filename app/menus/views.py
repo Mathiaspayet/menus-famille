@@ -69,18 +69,20 @@ def jour(request, date):
     except ValueError:
         raise Http404("Date invalide")
     j = get_object_or_404(Jour.objects.select_related("petit_dej", "midi_recette", "soir", "a_preparer"), date=date)
-    semaines = []
-    for s in Jour.objects.values("semaine", "semaine_libelle").distinct().order_by("semaine"):
-        premier = Jour.objects.filter(semaine=s["semaine"]).first()
-        semaines.append({**s, "date": premier.date})
-    jours = Jour.objects.filter(semaine=j.semaine)
+    # Bande des jours : tout le plan sur une ligne qu'on fait défiler du doigt.
+    jours = list(Jour.objects.values("date", "semaine", "semaine_libelle"))
+    for i, d in enumerate(jours):
+        d["nouvelle_semaine"] = i > 0 and d["semaine"] != jours[i - 1]["semaine"]
+    precedent = Jour.objects.filter(date__lt=j.date).last()
+    suivant = Jour.objects.filter(date__gt=j.date).first()
 
     repas = [x for x in [j.midi_recette and j.midi_recette.titre, j.soir and j.soir.titre] if x]
     libelle = j.libelle.rstrip(".")
     question = (f"Menus famille — {libelle}. Prévu : " + " ; ".join(repas) + ". Je voudrais modifier : ") if repas \
         else f"Menus famille — {libelle}. Je voudrais modifier : "
     return render(request, "menus/jour.html", {
-        "onglet": "semaine", "j": j, "jours": jours, "semaines": semaines,
+        "onglet": "jour", "j": j, "jours": jours, "precedent": precedent, "suivant": suivant,
+        "aujourdhui": timezone.localdate(),
         "personnes": Plan.actuel().personnes, "lien_claude": lien_claude(question),
     })
 
@@ -100,7 +102,7 @@ def jour_remarque(request, date):
 @login_required
 def petit_dej(request):
     return render(request, "menus/petit_dej.html", {
-        "onglet": "petit-dej", "formules": PetitDej.objects.all(), "personnes": Plan.actuel().personnes,
+        "onglet": "plus", "formules": PetitDej.objects.all(), "personnes": Plan.actuel().personnes,
     })
 
 
@@ -190,8 +192,14 @@ def frigo_retirer(request, reste_id):
 
 
 @login_required
+def plus(request):
+    """Le reste de l'appli : petits-déjeuners, consignes, plan, compte, version."""
+    return render(request, "menus/plus.html", {"onglet": "plus"})
+
+
+@login_required
 def infos(request):
-    return render(request, "menus/infos.html", {"onglet": "infos", "plan": Plan.actuel()})
+    return render(request, "menus/infos.html", {"onglet": "plus", "plan": Plan.actuel()})
 
 
 @login_required
@@ -221,4 +229,4 @@ def plan(request):
                 messages.success(request, "Plan importé : {recettes} recettes, {jours} jours, {listes} listes "
                                           "et {articles} articles. Les cases déjà cochées sont conservées.".format(**resume))
                 return redirect("accueil")
-    return render(request, "menus/plan.html", {"onglet": "", "plan": Plan.actuel(), "vide": not Jour.objects.exists()})
+    return render(request, "menus/plan.html", {"onglet": "plus", "plan": Plan.actuel(), "vide": not Jour.objects.exists()})

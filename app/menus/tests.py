@@ -477,3 +477,21 @@ class AppliInstallableTests(TestCase):
         r = self.client.get("/courses/")
         self.assertContains(r, "menus/appli.js")
         self.assertLess(r.content.index(b"menus/appli.js"), r.content.index(b"menus/courses.js"))
+
+
+class InterfaceTelephoneTests(TestCase):
+    def setUp(self):
+        importer_plan(copy.deepcopy(PLAN))
+        self.parent1 = User.objects.create_user("parent1", password="motdepasse-test")
+
+    def test_barre_du_bas_et_page_plus(self):
+        self.client.force_login(self.parent1)
+        r = self.client.get("/jour/2026-11-16/")
+        self.assertContains(r, '<nav class="barre"')
+        self.assertContains(r, 'aria-label="Jour suivant"')
+        self.assertNotContains(r, 'aria-label="Jour précédent"')  # premier jour du plan
+        self.assertContains(r, 'aria-current="date"')
+        plus = self.client.get("/plus/")
+        self.assertContains(plus, "Petits-déjeuners")
+        self.assertNotContains(plus, "Gérer le plan")  # réservé à l'équipe
+        self.assertEqual(self.client.get("/connexion/").status_code, 200)

@@ -1,7 +1,7 @@
 {% extends "menus/base.html" %}
 {% block titre %}Frigo · Menus{% endblock %}
 {% block contenu %}
-<h2>Il reste au frigo</h2>
+<h1>Frigo</h1>
 <div class="card">
   <form method="post" class="form">{% csrf_token %}
     <div class="row">
@@ -13,7 +13,7 @@
   </form>
 </div>
 
-<div class="ticket">
+<div class="ticket frigo">
   {% for r in restes %}
   <div class="frigo-item">
     <div><b>{{ r.nom }}</b>{% if r.quantite %} · {{ r.quantite }}{% endif %}

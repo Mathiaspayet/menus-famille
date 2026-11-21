@@ -71,7 +71,11 @@
   // pour pouvoir les ouvrir au supermarché même sans réseau.
   async function copierALAvance() {
     if (!navigator.onLine || !("caches" in window) || !navigator.serviceWorker || !navigator.serviceWorker.controller) return;
-    const liens = [...document.querySelectorAll(".days a[href], .shops a[href]")].map(a => a.href)
+    // La bande contient tout le plan : on ne copie que la veille et les 6 jours suivants.
+    const jours = [...document.querySelectorAll(".days a[href]")];
+    const ici = jours.findIndex(a => a.classList.contains("on"));
+    const proches = ici < 0 ? [] : jours.slice(Math.max(0, ici - 1), ici + 7);
+    const liens = [...proches, ...document.querySelectorAll(".shops a[href]")].map(a => a.href)
       .filter(h => h !== location.href);
     for (const url of liens) {
       try {
@@ -84,6 +88,20 @@
   }
   window.addEventListener("load", () => setTimeout(copierALAvance, 1500));
 
+  // ------------------------------------------------------------ mise en page
+  // Bande des jours : centrée sur le jour affiché.
+  const bande = document.querySelector(".days");
+  const choisi = bande && bande.querySelector(".on");
+  if (choisi) bande.scrollLeft = choisi.offsetLeft - bande.clientWidth / 2 + choisi.offsetWidth / 2;
+  // Textes longs (remarque du jour) : repliés à quelques lignes, « Lire la suite » pour tout voir.
+  document.querySelectorAll("[data-replier]").forEach(el => {
+    const texte = el.firstElementChild || el;
+    if (texte.scrollHeight > texte.clientHeight + 4) {
+      el.classList.add("repliable");
+      el.addEventListener("click", () => el.classList.toggle("ouvert"));
+    }
+  });
+
   // ------------------------------------------------------------ installation
   const MASQUE = "menus-installation-masquee";
   const installee = window.matchMedia("(display-mode: standalone)").matches || navigator.standalone === true;
@@ -91,7 +109,7 @@
     try { return Date.now() - Number(localStorage.getItem(MASQUE) || 0) < 30 * 86400000; } catch (e) { return false; }
   }
   function bandeau(html, action) {
-    const nav = document.querySelector("nav.tabs");
+    const nav = document.querySelector("nav.barre");
     if (!nav || installee || masqueeRecemment() || document.getElementById("installer")) return;
     const div = document.createElement("div");
     div.id = "installer";

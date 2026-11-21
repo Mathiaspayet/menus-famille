@@ -1,0 +1,17 @@
+{% extends "menus/base.html" %}
+{% block titre %}Plus · Menus{% endblock %}
+{% block contenu %}
+<h1>Plus</h1>
+<nav class="menu-plus">
+  <a href="{% url 'petit_dej' %}"><b>Petits-déjeuners</b><span>Les formules et leurs portions</span></a>
+  <a href="{% url 'infos' %}"><b>Infos de la famille</b><span>Principe, allergies, repères de portions</span></a>
+  {% if user.is_staff %}
+  <a href="{% url 'plan' %}"><b>Gérer le plan</b><span>Télécharger ou importer le fichier des menus</span></a>
+  <a href="{% url 'admin:index' %}"><b>Administration</b><span>Comptes, connexions de Claude, corrections</span></a>
+  {% endif %}
+</nav>
+<p class="small connecte">Connecté : {{ user.first_name|default:user.username }} ·
+  <a href="{% url 'logout' %}" onclick="event.preventDefault();document.getElementById('deco').submit()">Se déconnecter</a></p>
+<form id="deco" method="post" action="{% url 'logout' %}" hidden>{% csrf_token %}</form>
+{% endblock %}
+{% block pied %}{% include "menus/_version.html" %}{% endblock %}
