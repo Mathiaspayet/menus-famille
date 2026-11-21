@@ -59,7 +59,7 @@
 </details>
 {% endif %}
 
-<a class="claude" href="{{ lien_claude }}" target="_blank" rel="noopener">✦ Modifier avec Claude</a>
+{% include "menus/_bouton_claude.html" with texte="Modifier avec Claude" %}
 
 <details class="meal"><summary><span class="slot">Note</span><span class="what">{% if j.remarque %}Modifier la remarque{% else %}Ajouter une remarque{% endif %}<small>Repas sauté, invités, changement…</small></span><span class="chev" aria-hidden="true">›</span></summary>
   <div class="body"><form method="post" action="{% url 'jour_remarque' j.date|date:'Y-m-d' %}" class="form" style="margin-top:12px">{% csrf_token %}

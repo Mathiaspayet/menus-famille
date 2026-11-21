@@ -36,6 +36,7 @@
   {% block contenu %}{% endblock %}
 </main>
 {% with v=version_appli %}<footer class="version">Version {% if v.date %}du {{ v.date|date:"j F Y à H:i" }}{% else %}de développement{% endif %} · {{ v.code }} · démarrée le {{ v.demarree_le|date:"j F à H:i" }}</footer>{% endwith %}
+<script src="{% static 'menus/claude.js' %}"></script>
 {% block scripts %}{% endblock %}
 </body>
 </html>

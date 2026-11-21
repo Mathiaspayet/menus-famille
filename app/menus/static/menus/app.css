@@ -161,3 +161,4 @@ input[type=text],input[type=password],input[type=file],textarea{font:inherit;wid
 table.portions .tot{font-weight:700;color:var(--pine);border-left:1px solid var(--line)}
 table.portions tr.ligne-boite th,table.portions tr.ligne-boite td{color:var(--muted);font-style:italic}
 .a-peser{font-size:.88rem;background:var(--soft);border-radius:10px;padding:8px 10px;margin:4px 0 10px}
+.claude-aide{font-size:.85rem;background:var(--warnbg);color:var(--warn);border-radius:10px;padding:8px 10px;margin:-8px 0 14px}

@@ -96,6 +96,18 @@ class EcransTests(TestCase):
         # le petit-déj utilise le même tableau, sans la barre
         self.assertNotContains(self.client.get("/petit-dej/"), 'id="qui-mange"')
 
+    def test_bouton_claude_sans_puis_avec_projet(self):
+        self.client.force_login(self.parent1)
+        r = self.client.get("/jour/2026-11-16/")
+        self.assertContains(r, "https://claude.ai/new?q=")
+        self.assertNotContains(r, "data-copier")
+        with self.settings(CLAUDE_PROJECT_URL="https://claude.ai/project/essai"):
+            r = self.client.get("/jour/2026-11-16/")
+            self.assertContains(r, 'href="https://claude.ai/project/essai"')
+            self.assertContains(r, 'data-copier="Menus famille — Lundi 16 nov')
+            self.assertContains(r, "menus/claude.js")
+            self.assertContains(self.client.get("/frigo/"), "data-copier=")
+
     def test_cocher_partage_entre_deux_personnes(self):
         a = Article.objects.get(nom="Pommes")
         self.client.force_login(self.parent1)

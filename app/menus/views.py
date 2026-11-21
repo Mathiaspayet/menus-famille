@@ -23,10 +23,16 @@ CONSEILS = {
 
 
 def lien_claude(question):
-    """Lien qui ouvre Claude avec la question pré-remplie."""
+    """Bouton « Modifier avec Claude ».
+
+    - Projet Claude configuré (CLAUDE_PROJECT_URL) : le bouton ouvre le projet,
+      où se trouvent les consignes ; le texte de la question est copié dans le
+      presse-papiers (claude.js) pour être collé dans une nouvelle conversation.
+    - Sinon : nouvelle conversation avec la question pré-remplie.
+    """
     if settings.CLAUDE_PROJECT_URL:
-        return settings.CLAUDE_PROJECT_URL
-    return "https://claude.ai/new?q=" + quote(question)
+        return {"url": settings.CLAUDE_PROJECT_URL, "question": question, "projet": True}
+    return {"url": "https://claude.ai/new?q=" + quote(question), "question": question, "projet": False}
 
 
 def sante(request):
