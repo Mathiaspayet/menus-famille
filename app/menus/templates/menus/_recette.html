@@ -6,7 +6,7 @@
   </div>
   <h4>Dans l'assiette</h4>
   {% include "menus/_tableau.html" with lignes=r.portions %}
-  {% if r.boites %}<p class="note">Remplissez tout de suite les 2 boîtes avec les mêmes quantités que les assiettes des adultes.</p>{% endif %}
+  {% if r.boites %}<p class="note note-boites">Remplissez tout de suite les 2 boîtes avec les mêmes quantités que les assiettes des adultes.</p>{% endif %}
   {% if r.dessert %}<h4>Dessert</h4><p style="margin:0">{{ r.dessert }}</p>{% endif %}
   <h4>Ingrédients</h4>
   <ul class="ing">{% for i in r.ingredients %}<li>{{ i }}</li>{% endfor %}</ul>

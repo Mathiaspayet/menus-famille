@@ -85,6 +85,34 @@ class EcransTests(TestCase):
         self.assertContains(self.client.get("/jour/2026-11-16/"), "Curry de poulet")
         self.assertEqual(self.client.get("/jour/pas-une-date/").status_code, 404)
 
+    def test_qui_mange_sur_la_page_du_jour(self):
+        self.client.force_login(self.parent1)
+        r = self.client.get("/jour/2026-11-16/")
+        self.assertContains(r, 'id="qui-mange"')
+        self.assertContains(r, 'class="chip" data-p="3"')
+        self.assertContains(r, "menus/portions.js")
+        self.assertContains(r, '<td data-p="0">330 g</td>')
+        self.assertContains(r, '<td data-p="3">100 g</td>')
+        # le petit-déj utilise le même tableau, sans la barre
+        self.assertNotContains(self.client.get("/petit-dej/"), 'id="qui-mange"')
+
+    def test_bouton_claude_sans_puis_avec_projet(self):
+        self.client.force_login(self.parent1)
+        with self.settings(CLAUDE_PROJECT_URL=""):
+            r = self.client.get("/jour/2026-11-16/")
+            self.assertContains(r, "https://claude.ai/new?q=")
+            self.assertNotContains(r, "data-copier")
+        uuid = "0193a1b2-c3d4-7e5f-8a9b-0c1d2e3f4a5b"
+        with self.settings(CLAUDE_PROJECT_URL=f"https://claude.ai/project/{uuid}"):
+            r = self.client.get("/jour/2026-11-16/")
+            self.assertContains(r, f'href="https://claude.ai/project/{uuid}"')
+            self.assertContains(r, 'data-copier="Menus famille — Lundi 16 nov')
+            self.assertContains(r, "menus/claude.js")
+            self.assertContains(self.client.get("/frigo/"), "data-copier=")
+        # adresse sans identifiant de projet : on ouvre simplement l'adresse donnée
+        with self.settings(CLAUDE_PROJECT_URL="https://claude.ai/projects"):
+            self.assertContains(self.client.get("/jour/2026-11-16/"), 'href="https://claude.ai/projects"')
+
     def test_cocher_partage_entre_deux_personnes(self):
         a = Article.objects.get(nom="Pommes")
         self.client.force_login(self.parent1)

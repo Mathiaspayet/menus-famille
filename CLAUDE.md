@@ -102,5 +102,9 @@ GUIDE_INSTALLATION_NAS.md
    recettes, liste de courses). Claude Code n'a pas accès au connecteur. Mode d'emploi : `docs/MCP.md`. Accès HTTPS via
    le reverse proxy du NAS. Pas de clé API Anthropic (l'utilisateur ne veut pas
    de coût en plus de son abonnement).
-3. Projet Claude « Menus famille » avec les consignes ; le bouton
-   « Modifier avec Claude » pointera dessus (`CLAUDE_PROJECT_URL`).
+3. ✅ Projet Claude « Menus famille » : les consignes de méthode sont dans le
+   projet (sur claude.ai), les règles de fond dans l'onglet Infos (base du NAS),
+   avec un « Journal des décisions ». Le bouton « Modifier avec Claude » copie la
+   question (`claude.js`) puis ouvre la page du projet (`CLAUDE_PROJECT_URL`,
+   valeur par défaut dans `settings.py`) : on colle dans la zone de saisie du
+   projet. `claude.ai/new?project=…` a été essayé : ignoré sur mobile.

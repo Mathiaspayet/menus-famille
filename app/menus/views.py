@@ -23,10 +23,18 @@ CONSEILS = {
 
 
 def lien_claude(question):
-    """Lien qui ouvre Claude avec la question pré-remplie."""
+    """Bouton « Modifier avec Claude ».
+
+    - Projet Claude configuré (CLAUDE_PROJECT_URL) : le bouton ouvre la page du
+      projet ; claude.js copie la question dans le presse-papiers, à coller dans
+      la zone de saisie du projet (nouvelle conversation dans le projet).
+      Un lien de projet ne sait pas pré-remplir la question, et le paramètre
+      « project » de claude.ai/new n'est pas fiable (ignoré par l'appli mobile).
+    - Sinon : nouvelle conversation simple avec la question pré-remplie.
+    """
     if settings.CLAUDE_PROJECT_URL:
-        return settings.CLAUDE_PROJECT_URL
-    return "https://claude.ai/new?q=" + quote(question)
+        return {"url": settings.CLAUDE_PROJECT_URL, "question": question, "projet": True}
+    return {"url": "https://claude.ai/new?q=" + quote(question), "question": question, "projet": False}
 
 
 def service_worker(request):

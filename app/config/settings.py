@@ -118,7 +118,13 @@ BUILD_DATE = os.environ.get("BUILD_DATE", "")
 
 # Bouton « Modifier avec Claude » : adresse d'un projet Claude dédié (facultatif).
 # Vide : le bouton ouvre une nouvelle conversation avec la question pré-remplie.
-CLAUDE_PROJECT_URL = os.environ.get("CLAUDE_PROJECT_URL", "").strip()
+# Par défaut : le projet « Menus famille » du propriétaire de l'appli (l'identifiant
+# seul ne donne aucun accès : le projet reste privé). Remplaçable par la variable
+# d'environnement ; CLAUDE_PROJECT_URL=aucun pour revenir à une conversation simple.
+CLAUDE_PROJECT_URL_DEFAUT = "https://claude.ai/project/01a1fd94-3440-73d6-b97f-2db446cbfef4"
+CLAUDE_PROJECT_URL = os.environ.get("CLAUDE_PROJECT_URL", "").strip() or CLAUDE_PROJECT_URL_DEFAUT
+if CLAUDE_PROJECT_URL.lower() == "aucun":
+    CLAUDE_PROJECT_URL = ""
 
 LOGGING = {
     "version": 1,
