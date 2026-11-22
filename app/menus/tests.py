@@ -307,9 +307,9 @@ class McpTests(TestCase):
         pommes.refresh_from_db()
         self.assertTrue(pommes.coche)
         self.assertEqual(pommes.coche_par, self.parent1)
-        _, liste = self.outil(jeton, "lire_courses", date_courses="2026-11-16", magasin="primeur")
-        self.assertEqual(liste["magasins"]["primeur"]["faits"], 1)
-        self.assertEqual(liste["magasins"]["primeur"]["rayons"][0]["articles"][0]["coche_par"], "Parent 1")
+        _, lot = self.outil(jeton, "lire_courses", date_courses="2026-11-16", magasin="primeur")
+        pommes_lues = next(a for a in lot["articles"] if a["nom"] == "Pommes")
+        self.assertEqual((pommes_lues["coche"], pommes_lues["coche_par"]), (True, "Parent 1"))
 
     def test_ajouter_un_article_dans_son_rayon(self):
         jeton = self.connecter(self.parent1)["access_token"]
@@ -505,3 +505,68 @@ class InterfaceTelephoneTests(TestCase):
         self.assertIn('<div class="body" data-boites="1">', r)
         self.assertIn("menus/portions.js", r)
         self.assertNotIn("À peser", r)
+
+
+
+class CoursesUniqueTests(TestCase):
+    """Une seule liste de courses, triée par date d'usage (dates relatives à aujourd'hui)."""
+
+    connecter, rpc, outil = McpTests.connecter, McpTests.rpc, McpTests.outil
+
+    def setUp(self):
+        import datetime
+        from django.utils import timezone
+        self.auj = timezone.localdate()
+        j = lambda n: (self.auj + datetime.timedelta(days=n)).isoformat()  # noqa: E731
+        plan = copy.deepcopy(PLAN)
+        plan["listes"] = [
+            {"label": "Lot 1", "shop": j(-3), "range": "", "shops": {"boucher": [{"c": "Viandes", "items": [
+                ["Veau", "400 g", "", 1, 0, 0, j(3)],
+                ["Poulet", "625 g", "", 0, 0, 0, j(1)],
+                ["Bœuf haché", "500 g", "", 0, 0, 0, j(10)],
+                ["Agneau", "300 g", "", 0, 0, 0, j(-2)],
+                ["Porc", "600 g", "", 0, 0, 1, j(2)],
+            ]}]}},
+        ]
+        importer_plan(plan)
+        self.parent1 = User.objects.create_user("parent1", password="motdepasse-test")
+        self.client.force_login(self.parent1)
+
+    def test_triee_par_urgence_avec_horizon(self):
+        r = self.client.get("/courses/?magasin=boucher&jours=7").content.decode()
+        a_acheter = r[r.index('class="articles a-acheter"'):r.index('class="tout-fait"')]
+        self.assertLess(a_acheter.index("Poulet"), a_acheter.index("Veau"))   # demain avant dans 3 jours
+        self.assertIn("Demain", a_acheter)
+        self.assertNotIn("Bœuf haché", a_acheter)                            # au-delà de 7 jours
+        self.assertIn("+ 1 article pour plus tard", r)
+        self.assertNotIn("Porc", a_acheter)                                  # déjà acheté
+        self.assertIn("Déjà acheté (1)", r)
+        self.assertIn("Repas déjà passés, non cochés (1)", r)               # agneau d'avant-hier
+        self.assertContains(self.client.get("/courses/?magasin=boucher&jours=14"), "Bœuf haché")
+        etat = self.client.get("/courses/etat/").json()["articles"]
+        self.assertEqual(sorted(v["d"] for v in etat.values())[0], (self.auj - __import__("datetime").timedelta(days=2)).isoformat())
+
+    def test_date_retrouvee_dans_le_commentaire(self):
+        from .courses import date_d_usage
+        a = Article.objects.get(nom="Veau")
+        a.pour_le = None
+        a.commentaire = "À congeler · " + ["lun", "mar", "mer", "jeu", "ven", "sam", "dim"][
+            (self.auj + __import__("datetime").timedelta(days=4)).weekday()] + " " + str(
+            (self.auj + __import__("datetime").timedelta(days=4)).day)
+        self.assertEqual(date_d_usage(a), self.auj + __import__("datetime").timedelta(days=4))
+        a.commentaire = "Placard"
+        self.assertEqual(date_d_usage(a), a.liste.date_courses)
+
+    def test_export_puis_import_garde_la_date(self):
+        export = exporter_plan()
+        article = export["listes"][0]["shops"]["boucher"][0]["items"][0]
+        self.assertEqual(len(article), 7)
+        importer_plan(export)
+        self.assertEqual(Article.objects.get(nom="Poulet").pour_le, self.auj + __import__("datetime").timedelta(days=1))
+
+    def test_claude_lit_la_liste_triee(self):
+        jeton = self.connecter(self.parent1)["access_token"]
+        _, courses = self.outil(jeton, "lire_courses", jours=7)
+        self.assertEqual([a["nom"] for a in courses["a_acheter"]], ["Poulet", "Veau"])
+        self.assertEqual(courses["plus_tard"], 1)
+        self.assertEqual([a["nom"] for a in courses["deja_achetes"]], ["Porc"])

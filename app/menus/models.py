@@ -121,6 +121,8 @@ class Article(models.Model):
     commentaire = models.CharField(max_length=200, blank=True)
     congeler = models.BooleanField(default=False)
     verifier = models.BooleanField(default=False, help_text="Lire l'étiquette (allergène).")
+    pour_le = models.DateField("à utiliser le", null=True, blank=True,
+                               help_text="Date du premier repas qui l'utilise : la liste de courses est triée ainsi.")
     coche = models.BooleanField(default=False)
     coche_par = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL)
     coche_le = models.DateTimeField(null=True, blank=True)

@@ -56,7 +56,7 @@ Dans une conversation, le connecteur s'active ou se désactive avec le bouton **
 | `lire_infos_famille` | personnes, consignes (onglet Infos), formules de petit-déj, semaines, listes |
 | `lire_semaine`, `lire_jour` | les menus, avec les recettes complètes pour un jour |
 | `lister_recettes`, `lire_recette` | les recettes et les jours où elles sont prévues |
-| `lire_courses`, `lire_frigo` | une liste de courses (avec ce qui est coché, et par qui), les restes |
+| `lire_courses`, `lire_frigo` | la liste de courses unique, triée par urgence (avec ce qui est coché, et par qui), les restes |
 | `exporter_plan_complet` | tout le plan au format JSON |
 | `enregistrer_recettes` | créer ou modifier des recettes (par lots de 10) |
 | `modifier_jour` | remplacer un repas, changer le « À faire », la remarque… |
@@ -66,7 +66,7 @@ Dans une conversation, le connecteur s'active ou se désactive avec le bouton **
 | `modifier_infos_famille` | personnes et consignes de l'onglet Infos (comptes « équipe ») |
 | `cocher_articles` | cocher ou décocher des articles |
 | `ajouter_article`, `retirer_article` | modifier une liste de courses |
-| `remplacer_liste_courses` | créer ou recalculer une liste (les cases déjà cochées sont gardées) |
+| `remplacer_liste_courses` | créer ou recalculer un lot de courses, chaque article avec sa date d'utilisation (les cases déjà cochées sont gardées) |
 | `supprimer_liste_courses` | retirer une liste |
 | `ajouter_au_frigo`, `retirer_du_frigo` | gérer les restes |
 | `importer_plan_complet` | remplacer tout le plan (comptes « équipe » uniquement) |

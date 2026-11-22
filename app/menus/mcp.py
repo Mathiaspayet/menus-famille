@@ -35,7 +35,9 @@ INSTRUCTIONS = (
     "modifier_infos_famille (personnes, consignes) si besoin, enregistrer_petits_dejeuners, enregistrer_recettes "
     "par lots de 10, enregistrer_semaine (une semaine par appel), puis remplacer_liste_courses (une liste par "
     "appel). Recopier fidèlement : mêmes clés de recettes, portions dans l'ordre des personnes. "
-    "Après un changement de repas, mettre à jour la liste de courses concernée et tenir compte du frigo "
+    "Courses : la famille voit une seule liste, triée par urgence ; chaque article porte pour_le (date du premier "
+    "repas qui l'utilise) et elle achète au fil de l'eau les plus urgents. "
+    "Après un changement de repas, mettre à jour les courses concernées et tenir compte du frigo "
     "(lire_frigo). Respecter les portions par personne et les consignes de l'onglet Infos. Les cases cochées "
     "sont partagées : ne pas les décocher sans demande. Annoncer clairement chaque modification faite."
 )

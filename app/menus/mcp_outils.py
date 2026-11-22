@@ -19,6 +19,7 @@ from django.db.models import F, Max
 from django.utils import timezone
 from django.utils.html import strip_tags
 
+from . import courses as courses_mod
 from .models import Article, Jour, ListeCourses, PetitDej, Plan, Recette, ResteFrigo
 from .plan_io import PlanInvalide, exporter_plan, importer_plan
 
@@ -203,7 +204,9 @@ def _liste(date_courses):
 
 
 def _article(a):
-    return {"id": a.id, "nom": a.nom, "quantite": a.quantite, "commentaire": a.commentaire,
+    prio = getattr(a, "prio", None) or courses_mod.date_d_usage(a)
+    return {"id": a.id, "magasin": a.magasin, "rayon": a.categorie, "pour_le": prio.isoformat(),
+            "nom": a.nom, "quantite": a.quantite, "commentaire": a.commentaire,
             "congeler": a.congeler, "verifier": a.verifier, "coche": a.coche,
             "coche_par": _nom(a.coche_par), "coche_le": _quand(a.coche_le)}
 
@@ -297,28 +300,38 @@ def lire_recette(utilisateur, cle):
     return _recette_complete(_recette(cle))
 
 
-@outil("lire_courses", "Lire une liste de courses",
-       "Une liste de courses, par magasin et par rayon, avec l'identifiant de chaque article et ce qui est déjà "
-       "coché (et par qui). Sans date : la liste en cours.",
-       {"date_courses": {**DATE, "description": "Date des courses (AAAA-MM-JJ). Absente : la liste en cours."},
-        "magasin": MAGASIN}, lecture_seule=True)
-def lire_courses(utilisateur, date_courses=None, magasin=None):
-    liste = _liste(date_courses)
+@outil("lire_courses", "Lire la liste de courses",
+       "La liste de courses unique : tout ce qu'il reste à acheter pour les menus à venir, du plus urgent au moins "
+       "urgent (pour_le = date du premier repas qui utilise l'article), avec l'identifiant de chaque article. "
+       "Avec date_courses : le contenu d'un lot de courses précis (ancienne organisation par liste).",
+       {"jours": {"type": "integer", "description": "Horizon en jours à partir d'aujourd'hui (14 par défaut)."},
+        "magasin": MAGASIN,
+        "date_courses": {"type": "string", "description": "Facultatif : date d'un lot de courses (AAAA-MM-JJ)."}},
+       lecture_seule=True)
+def lire_courses(utilisateur, jours=14, magasin=None, date_courses=None):
     if magasin:
         _magasin(magasin)
-    magasins = {}
-    for a in liste.articles.select_related("coche_par"):
-        if magasin and a.magasin != magasin:
-            continue
-        m = magasins.setdefault(a.magasin, {"nom": MAGASINS[a.magasin], "faits": 0, "total": 0, "rayons": []})
-        m["total"] += 1
-        m["faits"] += a.coche
-        if not m["rayons"] or m["rayons"][-1]["rayon"] != a.categorie:
-            m["rayons"].append({"rayon": a.categorie, "articles": []})
-        m["rayons"][-1]["articles"].append(_article(a))
-    return {"date_courses": liste.date_courses.isoformat(), "libelle": liste.libelle, "periode": liste.periode,
-            "magasins": magasins,
-            "autres_listes": [l.date_courses.isoformat() for l in ListeCourses.objects.exclude(pk=liste.pk)]}
+    if date_courses:
+        liste = _liste(date_courses)
+        articles = [a for a in liste.articles.select_related("coche_par", "liste") if not magasin or a.magasin == magasin]
+        return {"lot": {"date_courses": liste.date_courses.isoformat(), "libelle": liste.libelle, "periode": liste.periode},
+                "articles": [_article(a) for a in articles]}
+    if not 0 < jours <= 60:
+        raise ErreurOutil("jours : entre 1 et 60.")
+    aujourdhui = timezone.localdate()
+    fin = aujourdhui + datetime.timedelta(days=jours)
+    articles = sorted((a for a in courses_mod.tous_les_articles() if not magasin or a.magasin == magasin),
+                      key=lambda a: (a.prio, a.magasin, a.categorie, a.ordre))
+    return {
+        "aujourdhui": aujourdhui.isoformat(), "jusqu_au": fin.isoformat(),
+        "a_acheter": [_article(a) for a in articles if not a.coche and aujourdhui <= a.prio <= fin],
+        "deja_achetes": [{"id": a.id, "nom": a.nom, "pour_le": a.prio.isoformat(), "coche_par": _nom(a.coche_par)}
+                         for a in articles if a.coche and a.prio >= aujourdhui],
+        "plus_tard": sum(1 for a in articles if not a.coche and a.prio > fin),
+        "repas_passes_non_coches": [{"id": a.id, "nom": a.nom, "pour_le": a.prio.isoformat()}
+                                    for a in articles if not a.coche and a.prio < aujourdhui],
+        "lots": [{"date_courses": l.date_courses.isoformat(), "libelle": l.libelle} for l in ListeCourses.objects.all()],
+    }
 
 
 @outil("lire_frigo", "Lire le frigo", "Les restes notés au frigo (à utiliser en priorité dans les prochains repas).",
@@ -618,10 +631,11 @@ def cocher_articles(utilisateur, ids, coche=True):
        {"date_courses": {"type": "string", "description": "Date de la liste (AAAA-MM-JJ)."}, "magasin": MAGASIN,
         "nom": TEXTE, "quantite": TEXTE, "rayon": {"type": "string", "description": "Ex. Fruits, Volaille, Épicerie"},
         "commentaire": TEXTE, "congeler": BOOLEEN,
-        "verifier": {"type": "boolean", "description": "Lire l'étiquette (allergène)."}},
+        "verifier": {"type": "boolean", "description": "Lire l'étiquette (allergène)."},
+        "pour_le": {"type": "string", "description": "Date du premier repas qui l'utilise (AAAA-MM-JJ) : sert à trier la liste."}},
        requis=["date_courses", "magasin", "nom"])
 def ajouter_article(utilisateur, date_courses, magasin, nom, quantite="", rayon="Divers", commentaire="",
-                    congeler=False, verifier=False):
+                    congeler=False, verifier=False, pour_le=None):
     liste = _liste(date_courses)
     _magasin(magasin)
     rayon = rayon.strip() or "Divers"
@@ -633,7 +647,8 @@ def ajouter_article(utilisateur, date_courses, magasin, nom, quantite="", rayon=
     else:
         ordre = (du_magasin.aggregate(m=Max("ordre"))["m"] or 0) + 1
     a = Article.objects.create(liste=liste, magasin=magasin, categorie=rayon, ordre=ordre, nom=nom.strip(),
-                               quantite=quantite, commentaire=commentaire, congeler=congeler, verifier=verifier)
+                               quantite=quantite, commentaire=commentaire, congeler=congeler, verifier=verifier,
+                               pour_le=_date(pour_le, "pour_le") if pour_le else None)
     return {"resultat": f"« {a.nom} » ajouté ({MAGASINS[magasin]}, {rayon})", "article": _article(a)}
 
 
@@ -648,16 +663,19 @@ def retirer_article(utilisateur, id):
 
 
 _ARTICLE = {"type": "object", "properties": {
-    "nom": TEXTE, "quantite": TEXTE, "commentaire": TEXTE, "congeler": BOOLEEN, "verifier": BOOLEEN},
+    "nom": TEXTE, "quantite": TEXTE, "commentaire": TEXTE, "congeler": BOOLEEN, "verifier": BOOLEEN,
+    "pour_le": {"type": "string", "description": "Date du premier repas qui utilise l'article (AAAA-MM-JJ)."}},
     "required": ["nom"]}
 _RAYONS = {"type": "array", "items": {"type": "object", "properties": {
     "rayon": TEXTE, "articles": {"type": "array", "items": _ARTICLE}}, "required": ["rayon", "articles"]}}
 
 
-@outil("remplacer_liste_courses", "Créer ou régénérer une liste de courses",
-       "Remplace tous les articles de la liste de cette date (ou crée la liste). À utiliser après un changement de "
-       "menus : recalculer les quantités à partir des recettes des jours couverts, regroupées par magasin et par rayon. "
-       "Les articles déjà cochés (même magasin, même nom) restent cochés.",
+@outil("remplacer_liste_courses", "Créer ou régénérer un lot de courses",
+       "Remplace tous les articles du lot de cette date (ou le crée). La famille ne voit qu'UNE liste, triée par "
+       "urgence : chaque article doit porter pour_le, la date du premier repas qui l'utilise (une viande = un repas ; "
+       "un légume pour plusieurs repas = la première date). Préparer un lot par semaine de menus, en recalculant les "
+       "quantités à partir des recettes, par magasin et par rayon. Les articles déjà cochés (même magasin, même nom) "
+       "restent cochés.",
        {"date_courses": {"type": "string", "description": "Date des courses (AAAA-MM-JJ)."},
         "libelle": {"type": "string", "description": "Ex. « Mar. 24 nov. » (obligatoire pour une nouvelle liste)."},
         "periode": {"type": "string", "description": "Repas couverts, ex. « du mar. 24 nov. soir au lun. 30 nov. »"},
@@ -699,6 +717,7 @@ def remplacer_liste_courses(utilisateur, date_courses, magasins, libelle=None, p
                     liste=liste, magasin=code, categorie=str(r.get("rayon") or ""), ordre=ordre, nom=nom,
                     quantite=str(item.get("quantite") or ""), commentaire=str(item.get("commentaire") or ""),
                     congeler=bool(item.get("congeler")), verifier=bool(item.get("verifier")),
+                    pour_le=_date(item["pour_le"], f"{nom}.pour_le") if item.get("pour_le") else None,
                     coche=bool(coche), coche_par_id=coche[0] if coche else None, coche_le=coche[1] if coche else None)
                 ordre += 1
                 total += 1

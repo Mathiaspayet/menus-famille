@@ -1,63 +1,57 @@
-// Liste de courses partagée.
-// 1. Cocher une case l'enregistre tout de suite sur le serveur (NAS).
+// Liste de courses unique, triée par urgence.
+// 1. Cocher une case l'enregistre tout de suite sur le serveur (NAS) ; l'article
+//    quitte la liste « à acheter » après un instant (on peut se raviser).
 //    Sans réseau (au fond du magasin…), la case reste cochée et part dès que
 //    la connexion revient (file d'attente d'appli.js).
 // 2. Toutes les 8 secondes, la page relit l'état pour afficher ce que
-//    l'autre personne a coché de son côté.
+//    l'autre personne a coché de son côté, et met à jour les compteurs.
 (function () {
   const ticket = document.getElementById("ticket");
   if (!ticket) return;
   const sync = document.getElementById("sync");
   const file = window.MenusHorsLigne;
+  const { debut, fin } = ticket.dataset;
+  const aAcheter = ticket.querySelector(".a-acheter");
 
   function statut(texte, alerte) {
     sync.textContent = texte;
     sync.classList.toggle("alerte", !!alerte); // reste visible en bas de l'écran
   }
-
   function heure() {
     return new Date().toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
+  }
+
+  // Les articles cochés quittent la liste « à acheter » ; un jour sans article disparaît aussi.
+  function ranger() {
+    if (!aAcheter) return;
+    let titre = null, visibles = 0;
+    const finJour = () => { if (titre) titre.hidden = titre._visibles === 0; };
+    aAcheter.querySelectorAll(".cat, .item").forEach(el => {
+      if (el.classList.contains("cat")) { finJour(); titre = el; titre._visibles = 0; return; }
+      const visible = !el.classList.contains("done") || el.classList.contains("juste");
+      el.hidden = !visible;
+      if (visible) { visibles++; if (titre) titre._visibles++; }
+    });
+    finJour();
+    const fini = ticket.querySelector(".tout-fait");
+    if (fini) fini.hidden = visibles > 0;
   }
 
   function afficher(box, coche) {
     box.checked = coche;
     box.closest(".item").classList.toggle("done", coche);
-    majMasquage();
+    ranger();
   }
 
-  // « Masquer les articles cochés » : choix gardé sur ce téléphone.
-  const masquer = document.getElementById("masquer-faits");
-  function majMasquage() {
-    if (!masquer) return;
-    ticket.classList.toggle("masquer-faits", masquer.checked);
-    let rayon = null, visibles = 0, total = 0;
-    const finRayon = () => { if (rayon) rayon.hidden = masquer.checked && rayon._visibles === 0; };
-    ticket.querySelectorAll(".cat, .item").forEach(el => {
-      if (el.classList.contains("cat")) { finRayon(); rayon = el; rayon._visibles = 0; return; }
-      total++;
-      if (!el.classList.contains("done") || el.classList.contains("juste")) { visibles++; if (rayon) rayon._visibles++; }
-    });
-    finRayon();
-    const fini = ticket.querySelector(".tout-fait");
-    if (fini) fini.hidden = !(masquer.checked && total > 0 && visibles === 0);
-  }
-  if (masquer) {
-    try { masquer.checked = localStorage.getItem("menus-masquer-faits") === "1"; } catch (e) { /* rien */ }
-    masquer.addEventListener("change", () => {
-      try { localStorage.setItem("menus-masquer-faits", masquer.checked ? "1" : "0"); } catch (e) { /* rien */ }
-      majMasquage();
-    });
-  }
-
+  // Compteurs des magasins : ce qui reste à acheter d'ici la fin de l'horizon.
   function majCompteurs(articles) {
-    const total = {}, faits = {};
+    const reste = {};
     Object.values(articles).forEach(a => {
-      total[a.m] = (total[a.m] || 0) + 1;
-      if (a.c) faits[a.m] = (faits[a.m] || 0) + 1;
+      if (!a.c && a.d >= debut && a.d <= fin) reste[a.m] = (reste[a.m] || 0) + 1;
     });
     document.querySelectorAll(".shops a[data-shop]").forEach(el => {
-      const m = el.dataset.shop;
-      el.querySelector("span").textContent = `${faits[m] || 0} / ${total[m] || 0}`;
+      const n = reste[el.dataset.shop] || 0;
+      el.querySelector("span").textContent = n ? `${n} à acheter` : "rien";
     });
   }
 
@@ -75,13 +69,12 @@
     });
   }
 
-  ticket.addEventListener("change", async e => {
+  document.addEventListener("change", async e => {
     const box = e.target;
-    if (box.type !== "checkbox") return;
-    // Une case qu'on vient de cocher reste visible un instant (on peut se raviser).
+    if (box.type !== "checkbox" || !box.dataset.url) return;
     const item = box.closest(".item");
     item.classList.add("juste");
-    setTimeout(() => { item.classList.remove("juste"); majMasquage(); }, 1500);
+    setTimeout(() => { item.classList.remove("juste"); ranger(); }, 1500);
     afficher(box, box.checked);
     file.ajouter(box.id.slice(1), box.dataset.url, box.checked);
     const { restants } = await file.envoyer();
@@ -101,7 +94,8 @@
       const { articles } = await r.json();
       Object.entries(articles).forEach(([id, a]) => {
         const box = document.getElementById("a" + id);
-        if (box && box.checked !== a.c) afficher(box, a.c);
+        const item = box && box.closest(".item");
+        if (box && box.checked !== a.c && !item.classList.contains("juste")) afficher(box, a.c);
       });
       appliquerAttente(articles);
       majCompteurs(articles);
@@ -117,15 +111,7 @@
     }
   }
 
-  // « Tout décocher » demande le réseau : on prévient au lieu d'afficher une erreur du navigateur.
-  ticket.querySelectorAll("form").forEach(f => f.addEventListener("submit", e => {
-    if (!navigator.onLine) {
-      e.preventDefault();
-      statut("Pas de réseau : « Tout décocher » sera possible une fois la connexion revenue.", true);
-    }
-  }));
-
-  majMasquage();
+  ranger();
   appliquerAttente();
   relire();
   setInterval(relire, 8000);

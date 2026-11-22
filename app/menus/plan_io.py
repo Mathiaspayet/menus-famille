@@ -123,14 +123,16 @@ def importer_plan(data, utilisateur=None):
                 for item in cat.get("items", []):
                     item = list(item) + [""] * (5 - len(item))
                     nom = item[0]
-                    if len(item) >= 6:  # état coché fourni par le fichier
+                    if len(item) >= 6 and item[5] is not None:  # état coché fourni par le fichier
                         coche, par, le = bool(item[5]), None, timezone.now() if item[5] else None
                     else:
                         coche, par, le = anciens.get((liste.date_courses, magasin, nom), (False, None, None))
+                    # 7e élément facultatif : date du premier repas qui utilise l'article
+                    pour_le = _date(item[6], f"l'article « {nom} »") if len(item) >= 7 and item[6] else None
                     Article.objects.create(
                         liste=liste, magasin=magasin, categorie=cat.get("c", ""), ordre=ordre,
                         nom=nom, quantite=item[1] or "", commentaire=item[2] or "",
-                        congeler=bool(item[3]), verifier=bool(item[4]),
+                        congeler=bool(item[3]), verifier=bool(item[4]), pour_le=pour_le,
                         coche=coche, coche_par_id=par, coche_le=le,
                     )
                     ordre += 1
@@ -179,7 +181,8 @@ def exporter_plan():
             cats = shops.setdefault(a.magasin, [])
             if not cats or cats[-1]["c"] != a.categorie:
                 cats.append({"c": a.categorie, "items": []})
-            cats[-1]["items"].append([a.nom, a.quantite, a.commentaire, int(a.congeler), int(a.verifier), int(a.coche)])
+            cats[-1]["items"].append([a.nom, a.quantite, a.commentaire, int(a.congeler), int(a.verifier), int(a.coche),
+                                      a.pour_le.isoformat() if a.pour_le else None])
         listes.append({"label": liste.libelle, "shop": liste.date_courses.isoformat(), "range": liste.periode, "shops": shops})
 
     return {

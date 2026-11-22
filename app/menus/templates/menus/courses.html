@@ -3,44 +3,49 @@
 {% block titre %}Courses · Menus{% endblock %}
 {% block contenu %}
 <h1>Courses</h1>
-<nav class="listes" aria-label="Listes de courses">
-  {% for l in listes %}<a href="{% url 'courses_liste' l.id %}?magasin={{ magasin }}"{% if l.id == liste.id %} aria-current="page"{% endif %}>{{ l.libelle }}</a>{% endfor %}
-</nav>
-<details class="infos-liste"><summary><span>Couvre {{ liste.periode }}</span><span class="chev" aria-hidden="true">›</span></summary>
-  <ol><li><b>Congelez</b> en rentrant les viandes marquées « À congeler ».</li>
-  <li>Les poissons et crevettes prévus après le jour des courses s'achètent <b>surgelés</b>.</li>
-  <li><b>Chaque soir, sortez ce qui est prévu le lendemain</b> et mettez-le au frigo.</li></ol>
-  <p class="small">{{ conseil }} Les cases cochées sont partagées : ce que l'un coche, l'autre le voit.</p>
-</details>
+<p class="sous-titre-courses">Du <b>plus urgent</b> au moins urgent : achetez les premiers selon votre temps et votre budget.</p>
 
 <div class="magasins">
+  <nav class="horizons" aria-label="Jusqu'à quand">
+    {% for n, libelle in horizons %}<a href="?magasin={{ magasin }}&amp;jours={{ n }}"{% if n == jours %} aria-current="page"{% endif %}>{{ libelle }}</a>{% endfor %}
+  </nav>
   <div class="shops" aria-label="Magasins">
-    {% for c in compteurs %}<a href="?magasin={{ c.code }}"{% if c.code == magasin %} class="on" aria-current="page"{% endif %} data-shop="{{ c.code }}"><b>{{ c.nom }}</b><span>{{ c.faits }} / {{ c.total }}</span></a>{% endfor %}
+    {% for c in compteurs %}<a href="?magasin={{ c.code }}&amp;jours={{ jours }}"{% if c.code == magasin %} class="on" aria-current="page"{% endif %} data-shop="{{ c.code }}"><b>{{ c.nom }}</b><span>{% if c.nombre %}{{ c.nombre }} à acheter{% else %}rien{% endif %}</span></a>{% endfor %}
   </div>
-  <label class="masquer"><input type="checkbox" id="masquer-faits"> Masquer les articles cochés</label>
 </div>
 
-<div class="ticket" id="ticket" data-etat="{% url 'courses_etat' liste.id %}" data-magasin="{{ magasin }}">
-  <div class="articles">
-  {% for cat in categories %}
-    <h2 class="cat">{{ cat.nom }}</h2>
-    {% for a in cat.articles %}
-    <div class="item{% if a.coche %} done{% endif %}">
-      <input type="checkbox" id="a{{ a.id }}" data-url="{% url 'article_cocher' a.id %}"{% if a.coche %} checked{% endif %}>
-      <label for="a{{ a.id }}"><span class="n">{{ a.nom }}{% if a.verifier %}<span class="a">Vérifier</span>{% endif %}</span>{% if a.commentaire %}<span class="c{% if a.congeler %} frz{% endif %}">{{ a.commentaire }}</span>{% endif %}</label>
-      <span class="q">{{ a.quantite }}</span>
-    </div>
-    {% endfor %}
-  {% empty %}<p class="small">Rien à acheter dans ce magasin pour cette liste.</p>
-  {% endfor %}
+<div class="ticket" id="ticket" data-etat="{% url 'courses_etat_global' %}" data-magasin="{{ magasin }}"
+     data-debut="{{ aujourdhui|date:'Y-m-d' }}" data-fin="{{ fin|date:'Y-m-d' }}">
+  <div class="articles a-acheter">
+  {% for g in groupes %}<section class="groupe">
+    <h2 class="cat jour-courses">{{ g.libelle }}</h2>
+    {% for a in g.articles %}{% include "menus/_article.html" %}{% endfor %}
+  </section>{% endfor %}
   </div>
-  <p class="tout-fait" hidden>Tout est coché dans ce magasin ✓</p>
-  <div class="bar">
-    <form method="post" action="{% url 'courses_decocher' liste.id %}" onsubmit="return confirm('Décocher tous les articles de ce magasin ?')">{% csrf_token %}
-      <input type="hidden" name="magasin" value="{{ magasin }}"><button type="submit">Tout décocher</button></form>
-  </div>
+  <p class="tout-fait"{% if groupes %} hidden{% endif %}>Rien à acheter ici {% if jours == 1 %}pour aujourd'hui et demain{% else %}d'ici le {{ fin|date:"j F" }}{% endif %} ✓</p>
+  {% if plus_tard %}<p class="plus-tard"><a href="?magasin={{ magasin }}&amp;jours=14">{% if jours < 14 %}+ {{ plus_tard|length }} article{{ plus_tard|length|pluralize }} pour plus tard{% else %}+ {{ plus_tard|length }} article{{ plus_tard|length|pluralize }} au-delà de 2 semaines{% endif %}</a></p>{% endif %}
   <p class="sync" id="sync"></p>
 </div>
+
+{% if achetes %}
+<details class="replie"><summary>Déjà acheté ({{ achetes|length }})<span class="chev" aria-hidden="true">›</span></summary>
+  <div class="ticket">{% for a in achetes %}{% include "menus/_article.html" with avec_date=True %}{% endfor %}</div>
+</details>
+{% endif %}
+{% if passes %}
+<details class="replie"><summary>Repas déjà passés, non cochés ({{ passes|length }})<span class="chev" aria-hidden="true">›</span></summary>
+  <p class="small">Articles prévus pour des repas d'avant aujourd'hui : cochez-les s'ils ont été achetés, sinon ignorez-les.</p>
+  <div class="ticket">{% for a in passes %}{% include "menus/_article.html" with avec_date=True %}{% endfor %}</div>
+</details>
+{% endif %}
+
+<details class="infos-liste"><summary><span>Conseils</span><span class="chev" aria-hidden="true">›</span></summary>
+  <ul><li>Une viande achetée plusieurs jours avant son repas : <b>congelez-la</b> en rentrant, avec la date dessus.</li>
+  <li>Les poissons et crevettes prévus dans plusieurs jours s'achètent <b>surgelés</b>.</li>
+  <li><b>Chaque soir, sortez ce qui est prévu le lendemain</b> (voir « À faire » sur la page du jour).</li>
+  <li>{{ conseil }}</li>
+  <li>Les cases sont partagées : ce que l'un coche, l'autre le voit.</li></ul>
+</details>
 {% csrf_token %}
 {% endblock %}
 {% block scripts %}<script src="{% static 'menus/courses.js' %}"></script>{% endblock %}

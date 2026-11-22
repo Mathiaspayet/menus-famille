@@ -163,7 +163,7 @@ ol.steps li::before{content:counter(etape);position:absolute;left:0;top:0;width:
 .listes a{flex:0 0 auto;text-decoration:none;font-size:.92rem;font-weight:700;border:1px solid var(--line);background:var(--card);
   border-radius:999px;padding:8px 14px}
 .listes a[aria-current]{background:var(--pine);border-color:var(--pine);color:var(--paper)}
-.infos-liste{margin:2px 0 6px;font-size:.9rem;color:var(--muted)}
+.infos-liste{margin:12px 0 6px;font-size:.9rem;color:var(--muted)}
 .infos-liste>summary{display:flex;justify-content:space-between;gap:10px;padding:6px 2px}
 .infos-liste ol{margin:4px 0;padding-left:20px;color:var(--ink)}
 .infos-liste li{margin:4px 0}
@@ -176,8 +176,19 @@ ol.steps li::before{content:counter(etape);position:absolute;left:0;top:0;width:
 .shops a span{font-size:.8rem;color:var(--muted);font-variant-numeric:tabular-nums}
 .shops a.on{background:var(--pine);border-color:var(--pine);color:var(--paper)}
 .shops a.on span{color:var(--paper);opacity:.85}
-.masquer{display:flex;align-items:center;gap:8px;font-size:.9rem;color:var(--muted);margin-top:8px;cursor:pointer}
-.masquer input{width:20px;height:20px;margin:0;accent-color:var(--pine)}
+.sous-titre-courses{font-size:.9rem;color:var(--muted);margin:-6px 0 10px}
+.horizons{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:8px}
+.horizons a{text-align:center;text-decoration:none;font-size:.88rem;font-weight:700;border:1px solid var(--line);background:var(--card);
+  border-radius:999px;padding:6px 4px;white-space:nowrap}
+.horizons a[aria-current]{background:var(--pumpkin);border-color:var(--pumpkin);color:#fff}
+h2.cat.jour-courses{font-family:var(--body);font-weight:700;font-size:.92rem;color:var(--pumpkin);margin:18px 0 0;padding-bottom:2px}
+.plus-tard{margin:12px 0 0;text-align:center}
+.plus-tard a{color:var(--pine);font-weight:700}
+.replie{margin-top:12px}
+.replie>summary{display:flex;justify-content:space-between;align-items:center;padding:10px 2px;font-weight:700;color:var(--muted)}
+.replie .ticket{margin-top:4px}
+.replie .small{margin:0 0 6px}
+.infos-liste ul{margin:4px 0;padding-left:20px;color:var(--ink)}
 .ticket{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:2px 16px 12px}
 h2.cat{font-size:1.15rem;margin:16px 0 0}
 .item{display:grid;grid-template-columns:30px 1fr auto;gap:10px;align-items:start;padding:12px 0;border-bottom:1px dashed var(--line)}
@@ -186,10 +197,9 @@ h2.cat{font-size:1.15rem;margin:16px 0 0}
 .item .n{font-size:1.05rem}
 .item .q{font-weight:700;white-space:nowrap;font-variant-numeric:tabular-nums}
 .item .c{display:block;font-size:.85rem;color:var(--muted)}
-.item .c.frz{color:var(--pine);font-weight:700}
+.item .c .frz{color:var(--pine)}
 .item .a{display:inline-block;font-size:.72rem;font-weight:700;color:var(--warn);background:var(--warnbg);border-radius:6px;padding:0 6px;margin-left:6px;vertical-align:2px}
 .item.done label,.item.done .q{opacity:.45;text-decoration:line-through}
-.masquer-faits .item.done:not(.juste){display:none}
 .tout-fait{text-align:center;color:var(--ok);font-weight:700;padding:18px 0 6px;margin:0}
 .bar{display:flex;justify-content:flex-end;margin:12px 0 0}
 .bar form{margin:0}
@@ -259,7 +269,7 @@ input[type=text],input[type=password],input[type=file],textarea{font:inherit;wid
   .recette-colonnes{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);gap:32px;align-items:start}
   /* Courses : deux colonnes d'articles */
   .articles{columns:2;column-gap:40px}
-  .articles .item{break-inside:avoid}
+  .articles .item,.articles .groupe{break-inside:avoid}
   .articles h2.cat{break-after:avoid}
   .articles h2.cat:first-child{margin-top:12px}
   nav.barre{padding-left:max(calc(50% - 320px),env(safe-area-inset-left));padding-right:max(calc(50% - 320px),env(safe-area-inset-right))}

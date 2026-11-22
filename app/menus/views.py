@@ -12,6 +12,7 @@ from django.utils import timezone
 from django.views.decorators.http import require_POST
 
 from .models import Article, Jour, ListeCourses, PetitDej, Plan, ResteFrigo
+from . import courses as courses_mod
 from .plan_io import PlanInvalide, exporter_plan, importer_plan
 
 MAGASINS = dict(Article.MAGASINS)
@@ -106,35 +107,35 @@ def petit_dej(request):
     })
 
 
-def _liste_courante():
-    aujourdhui = timezone.localdate()
-    return ListeCourses.objects.filter(date_courses__lte=aujourdhui).last() or ListeCourses.objects.first()
-
-
 @login_required
 def courses(request, liste_id=None):
-    liste = get_object_or_404(ListeCourses, pk=liste_id) if liste_id else _liste_courante()
-    if not liste:
-        return redirect("plan")
+    """Une seule liste, tous les menus à venir, du plus urgent au moins urgent.
+    (liste_id : anciennes adresses par liste, gardées pour ne pas casser les liens.)"""
     magasin = request.GET.get("magasin", "boucher")
     if magasin not in MAGASINS:
         magasin = "boucher"
-    articles = list(liste.articles.all())
-    compteurs = []
-    for code, nom in Article.MAGASINS:
-        du_magasin = [a for a in articles if a.magasin == code]
-        compteurs.append({"code": code, "nom": nom, "faits": sum(a.coche for a in du_magasin), "total": len(du_magasin)})
-    categories = []
-    for a in articles:
-        if a.magasin != magasin:
-            continue
-        if not categories or categories[-1]["nom"] != a.categorie:
-            categories.append({"nom": a.categorie, "articles": []})
-        categories[-1]["articles"].append(a)
+    try:
+        jours = int(request.GET.get("jours", courses_mod.HORIZON_PAR_DEFAUT))
+    except ValueError:
+        jours = courses_mod.HORIZON_PAR_DEFAUT
+    if jours not in dict(courses_mod.HORIZONS):
+        jours = courses_mod.HORIZON_PAR_DEFAUT
+    aujourdhui = timezone.localdate()
+    donnees = courses_mod.liste_globale(magasin, jours, aujourdhui)
     return render(request, "menus/courses.html", {
-        "onglet": "courses", "liste": liste, "listes": ListeCourses.objects.all(), "magasin": magasin,
-        "compteurs": compteurs, "categories": categories, "conseil": CONSEILS[magasin],
+        "onglet": "courses", "magasin": magasin, "jours": jours, "horizons": courses_mod.HORIZONS,
+        "aujourdhui": aujourdhui, "conseil": CONSEILS[magasin],
+        "compteurs": [{"code": c, "nom": n, "nombre": donnees["a_acheter"][c]} for c, n in Article.MAGASINS],
+        **donnees,
     })
+
+
+@login_required
+def courses_etat_global(request):
+    """État de toutes les cases (et date d'usage) : la page le relit toutes les
+    quelques secondes pour afficher ce que l'autre personne a coché."""
+    return JsonResponse({"articles": {a.id: {"c": a.coche, "m": a.magasin, "d": a.prio.isoformat()}
+                                      for a in courses_mod.tous_les_articles()}})
 
 
 @login_required
