@@ -570,3 +570,22 @@ class CoursesUniqueTests(TestCase):
         self.assertEqual([a["nom"] for a in courses["a_acheter"]], ["Poulet", "Veau"])
         self.assertEqual(courses["plus_tard"], 1)
         self.assertEqual([a["nom"] for a in courses["deja_achetes"]], ["Porc"])
+
+
+
+class SondeDeSanteTests(TestCase):
+    def test_sonde_acceptee_meme_si_le_env_ne_cite_que_le_domaine(self):
+        """Cas réel : .env avec seulement l'IP du NAS et le domaine → /sante/ doit répondre 200."""
+        import os
+        import subprocess
+        import sys
+        env = {**os.environ, "DJANGO_ALLOWED_HOSTS": "192.168.1.20,menu.exemple.fr", "DJANGO_DEBUG": "0",
+               "DJANGO_SECRET_KEY": "essai", "DJANGO_SETTINGS_MODULE": "config.settings"}
+        code = ("import django; django.setup(); from django.conf import settings; "
+                "print(','.join(settings.ALLOWED_HOSTS))")
+        sortie = subprocess.run([sys.executable, "-c", code], env=env, capture_output=True, text=True,
+                                cwd=os.path.dirname(os.path.dirname(os.path.abspath(__file__))), check=True)
+        hotes = sortie.stdout.strip().split(",")
+        self.assertEqual(hotes[:2], ["192.168.1.20", "menu.exemple.fr"])
+        self.assertIn("127.0.0.1", hotes)
+        self.assertEqual(self.client.get("/sante/", HTTP_HOST="127.0.0.1:8000").status_code, 200)

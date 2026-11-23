@@ -27,6 +27,12 @@ if not SECRET_KEY:
         raise RuntimeError("DJANGO_SECRET_KEY doit être défini (voir .env.example).")
 
 ALLOWED_HOSTS = env_list("DJANGO_ALLOWED_HOSTS", "localhost,127.0.0.1")
+# La sonde de santé de Docker (healthcheck.py) appelle l'appli depuis l'intérieur
+# du conteneur, sur 127.0.0.1 : toujours autorisé, quel que soit le .env.
+# Sans cela, le conteneur est marqué « en mauvaise santé » dans Container Manager.
+for _hote in ("127.0.0.1", "localhost"):
+    if _hote not in ALLOWED_HOSTS:
+        ALLOWED_HOSTS.append(_hote)
 # Ex. : https://menus.mondomaine.fr — nécessaire derrière le reverse proxy HTTPS.
 CSRF_TRUSTED_ORIGINS = env_list("DJANGO_CSRF_TRUSTED_ORIGINS")
 
