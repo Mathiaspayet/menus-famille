@@ -671,11 +671,12 @@ _RAYONS = {"type": "array", "items": {"type": "object", "properties": {
 
 
 @outil("remplacer_liste_courses", "Créer ou régénérer un lot de courses",
-       "Remplace tous les articles du lot de cette date (ou le crée). La famille ne voit qu'UNE liste, triée par "
-       "urgence : chaque article doit porter pour_le, la date du premier repas qui l'utilise (une viande = un repas ; "
-       "un légume pour plusieurs repas = la première date). Préparer un lot par semaine de menus, en recalculant les "
-       "quantités à partir des recettes, par magasin et par rayon. Les articles déjà cochés (même magasin, même nom) "
-       "restent cochés.",
+       "Remplace tous les articles du lot de cette date (ou le crée). La famille ne voit qu'UNE liste : l'appli "
+       "regroupe elle-même chaque ingrédient sur la période choisie (quantités additionnées, dates d'usage affichées), "
+       "du plus urgent au moins urgent. Écrire donc UN ARTICLE PAR INGRÉDIENT ET PAR REPAS, avec pour_le = date du "
+       "repas et la quantité de ce repas, sans additionner (ex. Carottes 300 g pour le 25, Carottes 500 g pour le 26). "
+       "Même nom pour un même ingrédient. Un lot par semaine de menus, quantités tirées des recettes, par magasin et "
+       "par rayon. Les articles déjà cochés (même magasin, même nom) restent cochés.",
        {"date_courses": {"type": "string", "description": "Date des courses (AAAA-MM-JJ)."},
         "libelle": {"type": "string", "description": "Ex. « Mar. 24 nov. » (obligatoire pour une nouvelle liste)."},
         "periode": {"type": "string", "description": "Repas couverts, ex. « du mar. 24 nov. soir au lun. 30 nov. »"},

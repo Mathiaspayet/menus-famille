@@ -1,6 +1,0 @@
-<div class="item{% if a.coche %} done{% endif %}">
-  <input type="checkbox" id="a{{ a.id }}" data-url="{% url 'article_cocher' a.id %}"{% if a.coche %} checked{% endif %}>
-  <label for="a{{ a.id }}"><span class="n">{{ a.nom }}{% if a.verifier %}<span class="a">Vérifier</span>{% endif %}</span>
-    {% if avec_date or a.a_congeler or a.note %}<span class="c">{% if avec_date %}Pour le {{ a.prio|date:"D j" }}{% endif %}{% if a.a_congeler and not avec_date %}<b class="frz">❄ À congeler en rentrant</b>{% endif %}{% if a.note %}{% if avec_date or a.a_congeler %} · {% endif %}{{ a.note }}{% endif %}</span>{% endif %}</label>
-  <span class="q">{{ a.quantite }}</span>
-</div>

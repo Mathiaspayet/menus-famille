@@ -198,6 +198,7 @@ h2.cat{font-size:1.15rem;margin:16px 0 0}
 .item .q{font-weight:700;white-space:nowrap;font-variant-numeric:tabular-nums}
 .item .c{display:block;font-size:.85rem;color:var(--muted)}
 .item .c .frz{color:var(--pine)}
+.item .c.apres{font-style:italic;font-size:.8rem}
 .item .a{display:inline-block;font-size:.72rem;font-weight:700;color:var(--warn);background:var(--warnbg);border-radius:6px;padding:0 6px;margin-left:6px;vertical-align:2px}
 .item.done label,.item.done .q{opacity:.45;text-decoration:line-through}
 .tout-fait{text-align:center;color:var(--ok);font-weight:700;padding:18px 0 6px;margin:0}

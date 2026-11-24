@@ -1,0 +1,10 @@
+{% comment %}Une ligne par ingrédient : peut regrouper plusieurs articles (quantités additionnées).
+Cocher la ligne coche tous ses articles (courses.js lit data-articles = [[id, url], …]).{% endcomment %}
+<div class="item{% if l.coche %} done{% endif %}" data-articles="{{ l.donnees }}">
+  <input type="checkbox" id="l-{{ l.cle|slugify }}"{% if l.coche %} checked{% endif %}>
+  <label for="l-{{ l.cle|slugify }}"><span class="n">{{ l.nom }}{% if l.verifier %}<span class="a">Vérifier</span>{% endif %}</span>
+    <span class="c quand">{{ l.quand }}</span>{% if l.apres %}<span class="c apres">{{ l.apres }}</span>{% endif %}
+    {% if l.a_congeler and not l.coche %}<span class="c"><b class="frz">❄ À congeler en rentrant</b></span>{% endif %}
+    {% if l.note %}<span class="c">{{ l.note }}</span>{% endif %}</label>
+  <span class="q">{{ l.quantite }}</span>
+</div>

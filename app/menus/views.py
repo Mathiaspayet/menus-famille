@@ -134,7 +134,8 @@ def courses(request, liste_id=None):
 def courses_etat_global(request):
     """État de toutes les cases (et date d'usage) : la page le relit toutes les
     quelques secondes pour afficher ce que l'autre personne a coché."""
-    return JsonResponse({"articles": {a.id: {"c": a.coche, "m": a.magasin, "d": a.prio.isoformat()}
+    return JsonResponse({"articles": {a.id: {"c": a.coche, "m": a.magasin, "d": a.prio.isoformat(),
+                                             "k": courses_mod.cle(a)}
                                       for a in courses_mod.tous_les_articles()}})
 
 

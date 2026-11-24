@@ -1,10 +1,11 @@
-// Liste de courses unique, triée par urgence.
-// 1. Cocher une case l'enregistre tout de suite sur le serveur (NAS) ; l'article
-//    quitte la liste « à acheter » après un instant (on peut se raviser).
-//    Sans réseau (au fond du magasin…), la case reste cochée et part dès que
-//    la connexion revient (file d'attente d'appli.js).
-// 2. Toutes les 8 secondes, la page relit l'état pour afficher ce que
-//    l'autre personne a coché de son côté, et met à jour les compteurs.
+// Liste de courses : une ligne par ingrédient, quantités additionnées sur la
+// période choisie, du plus urgent au moins urgent.
+// 1. Cocher une ligne coche tous les articles qu'elle regroupe (data-articles =
+//    [[id, adresse], …]) ; la ligne quitte la liste « à acheter » après un instant.
+//    Sans réseau, les cases restent cochées et partent au retour de la connexion
+//    (file d'attente d'appli.js).
+// 2. Toutes les 8 secondes, la page relit l'état pour afficher ce que l'autre
+//    personne a coché, et met à jour les compteurs des magasins.
 (function () {
   const ticket = document.getElementById("ticket");
   if (!ticket) return;
@@ -12,6 +13,9 @@
   const file = window.MenusHorsLigne;
   const { debut, fin } = ticket.dataset;
   const aAcheter = ticket.querySelector(".a-acheter");
+  const lignes = Array.from(document.querySelectorAll(".item[data-articles]")).map(el => ({
+    el, box: el.querySelector("input[type=checkbox]"), articles: JSON.parse(el.dataset.articles),
+  }));
 
   function statut(texte, alerte) {
     sync.textContent = texte;
@@ -21,36 +25,32 @@
     return new Date().toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
   }
 
-  // Les articles cochés quittent la liste « à acheter » ; un jour sans article disparaît aussi.
+  // Les lignes cochées quittent la liste « à acheter » (sauf juste après le geste).
   function ranger() {
     if (!aAcheter) return;
-    let titre = null, visibles = 0;
-    const finJour = () => { if (titre) titre.hidden = titre._visibles === 0; };
-    aAcheter.querySelectorAll(".cat, .item").forEach(el => {
-      if (el.classList.contains("cat")) { finJour(); titre = el; titre._visibles = 0; return; }
+    let visibles = 0;
+    aAcheter.querySelectorAll(".item").forEach(el => {
       const visible = !el.classList.contains("done") || el.classList.contains("juste");
       el.hidden = !visible;
-      if (visible) { visibles++; if (titre) titre._visibles++; }
+      if (visible) visibles++;
     });
-    finJour();
     const fini = ticket.querySelector(".tout-fait");
     if (fini) fini.hidden = visibles > 0;
   }
 
-  function afficher(box, coche) {
-    box.checked = coche;
-    box.closest(".item").classList.toggle("done", coche);
-    ranger();
+  function afficher(ligne, coche) {
+    ligne.box.checked = coche;
+    ligne.el.classList.toggle("done", coche);
   }
 
-  // Compteurs des magasins : ce qui reste à acheter d'ici la fin de l'horizon.
+  // Compteurs des magasins : nombre d'ingrédients à acheter sur la période.
   function majCompteurs(articles) {
     const reste = {};
     Object.values(articles).forEach(a => {
-      if (!a.c && a.d >= debut && a.d <= fin) reste[a.m] = (reste[a.m] || 0) + 1;
+      if (!a.c && a.d >= debut && a.d <= fin) (reste[a.m] = reste[a.m] || new Set()).add(a.k);
     });
     document.querySelectorAll(".shops a[data-shop]").forEach(el => {
-      const n = reste[el.dataset.shop] || 0;
+      const n = reste[el.dataset.shop] ? reste[el.dataset.shop].size : 0;
       el.querySelector("span").textContent = n ? `${n} à acheter` : "rien";
     });
   }
@@ -60,27 +60,29 @@
     return n ? `${n} case${n > 1 ? "s" : ""} en attente, envoyée${n > 1 ? "s" : ""} dès le retour du réseau.` : "";
   }
 
-  // Les cases en attente gardent leur état local, quoi que dise le serveur.
-  function appliquerAttente(articles) {
-    Object.entries(file.enAttente()).forEach(([id, { coche }]) => {
-      const box = document.getElementById("a" + id);
-      if (box) afficher(box, coche);
-      if (articles && articles[id]) articles[id].c = coche;
+  // État d'une ligne = tous ses articles cochés (les cases en attente priment sur le serveur).
+  function appliquer(articles) {
+    const attente = file.enAttente();
+    lignes.forEach(ligne => {
+      if (ligne.el.classList.contains("juste")) return;
+      const coche = ligne.articles.every(([id]) =>
+        attente[id] ? attente[id].coche : articles && articles[id] ? articles[id].c : ligne.box.checked);
+      if (coche !== ligne.box.checked) afficher(ligne, coche);
     });
+    if (articles) Object.entries(attente).forEach(([id, { coche }]) => { if (articles[id]) articles[id].c = coche; });
+    ranger();
   }
 
-  document.addEventListener("change", async e => {
-    const box = e.target;
-    if (box.type !== "checkbox" || !box.dataset.url) return;
-    const item = box.closest(".item");
-    item.classList.add("juste");
-    setTimeout(() => { item.classList.remove("juste"); ranger(); }, 1500);
-    afficher(box, box.checked);
-    file.ajouter(box.id.slice(1), box.dataset.url, box.checked);
+  lignes.forEach(ligne => ligne.box.addEventListener("change", async () => {
+    const coche = ligne.box.checked;
+    ligne.el.classList.add("juste");
+    setTimeout(() => { ligne.el.classList.remove("juste"); ranger(); }, 1500);
+    afficher(ligne, coche);
+    ligne.articles.forEach(([id, url]) => file.ajouter(String(id), url, coche));
     const { restants } = await file.envoyer();
     statut(restants ? "Hors connexion : " + etatAttente() : `Enregistré à ${heure()}`, restants);
     relire(); // compteurs des magasins à jour tout de suite
-  });
+  }));
 
   let enCours = false;
   async function relire() {
@@ -92,27 +94,21 @@
       if (!r.ok) throw new Error(r.status);
       const copie = r.headers.get("X-Menus-Copie") === "1";
       const { articles } = await r.json();
-      Object.entries(articles).forEach(([id, a]) => {
-        const box = document.getElementById("a" + id);
-        const item = box && box.closest(".item");
-        if (box && box.checked !== a.c && !item.classList.contains("juste")) afficher(box, a.c);
-      });
-      appliquerAttente(articles);
+      appliquer(articles);
       majCompteurs(articles);
       const attente = etatAttente();
       if (copie) statut(`Hors connexion : liste enregistrée sur ce téléphone. ${attente}`, true);
       else if (attente) statut(`Connexion instable : ${attente}`, true);
       else statut(`À jour à ${heure()}`, false);
     } catch (err) {
-      appliquerAttente();
+      appliquer();
       statut(`Hors connexion : la liste reste utilisable. ${etatAttente()}`, true);
     } finally {
       enCours = false;
     }
   }
 
-  ranger();
-  appliquerAttente();
+  appliquer();
   relire();
   setInterval(relire, 8000);
   window.addEventListener("online", relire);

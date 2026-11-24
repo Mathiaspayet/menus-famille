@@ -57,10 +57,13 @@ rattache par l'étiquette `com.centurylinklabs.watchtower.scope=gestion-locative
   capture téléphone (Playwright « Pixel 7 ») et iPad (820×1180 et 1180×820).
 - « Pour 4 personnes » (`portions.js`) : retirer quelqu'un recalcule tous les
   ingrédients (part lue dans le tableau des portions, boîtes comprises).
-- Courses : **une seule liste**, tous lots confondus, triée par date d'utilisation
-  (`Article.pour_le`, sinon date lue dans le commentaire, sinon date du lot) — logique
-  dans `courses.py`. La famille achète au fil de l'eau les articles les plus urgents
-  (horizon Demain / 3 / 7 / 14 jours). `ListeCourses` n'est plus qu'un « lot » interne.
+- Courses : **une seule liste**, tous lots confondus. Sur la période choisie
+  (Demain / 3 / 7 / 14 jours), **une ligne par ingrédient** (nom normalisé) :
+  quantités additionnées, « N fois : dates », triée par première date d'usage
+  (`Article.pour_le`, sinon dates lues dans le commentaire, sinon date du lot).
+  Cocher la ligne coche tous ses articles. Logique dans `courses.py` ;
+  `ListeCourses` n'est plus qu'un « lot » interne. Claude écrit un article par
+  ingrédient et par repas, sans additionner.
 - Hors connexion : `sw.js` ne doit jamais garder en copie `/mcp`, `/oauth/`, `/admin/`,
   `/connexion/`… (liste `JAMAIS`). Une nouvelle page qui modifie des données doit
   rester accessible uniquement en ligne.

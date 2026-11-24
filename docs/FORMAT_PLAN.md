@@ -83,10 +83,12 @@ affiche `lbl`/`sub` et la recette en détail (cas des boîtes repas).
 Un article = `[nom, quantité, commentaire, à congeler (0/1), à vérifier (0/1), coché (0/1), à utiliser le]`.
 Le 6e élément (coché) est facultatif : s'il est absent (ou `null`), l'appli garde l'état déjà
 coché pour un article de même nom, même magasin et même date de courses.
-Le 7e élément (facultatif) est la **date du premier repas qui utilise l'article**
+Le 7e élément (facultatif) est la **date du repas qui utilise l'article**
 (`"2026-11-24"`). La famille ne voit qu'**une seule liste de courses**, tous lots
-confondus, triée par cette date : on achète au fil de l'eau les articles les plus
-urgents. Sans cette date, l'appli la cherche dans le commentaire (« À congeler · sam 21 »,
+confondus : sur la période choisie (demain, 3, 7 ou 14 jours), l'appli regroupe
+chaque ingrédient sur une ligne (quantités additionnées, « 3 fois : demain, jeu 26,
+sam 28 »), du plus urgent au moins urgent. Le mieux est donc d'écrire **un article
+par ingrédient et par repas**, avec la quantité de ce repas, sans additionner. Sans cette date, l'appli la cherche dans le commentaire (« À congeler · sam 21 »,
 « Pour mer 18, lun 23 ») et, à défaut, prend la date du lot (`"shop"`).
 
 ## Règles à l'import

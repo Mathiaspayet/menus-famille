@@ -536,9 +536,9 @@ class CoursesUniqueTests(TestCase):
         r = self.client.get("/courses/?magasin=boucher&jours=7").content.decode()
         a_acheter = r[r.index('class="articles a-acheter"'):r.index('class="tout-fait"')]
         self.assertLess(a_acheter.index("Poulet"), a_acheter.index("Veau"))   # demain avant dans 3 jours
-        self.assertIn("Demain", a_acheter)
+        self.assertIn("Pour demain", a_acheter)
         self.assertNotIn("Bœuf haché", a_acheter)                            # au-delà de 7 jours
-        self.assertIn("+ 1 article pour plus tard", r)
+        self.assertIn("+ 1 ingrédient pour plus tard", r)
         self.assertNotIn("Porc", a_acheter)                                  # déjà acheté
         self.assertIn("Déjà acheté (1)", r)
         self.assertIn("Repas déjà passés, non cochés (1)", r)               # agneau d'avant-hier
@@ -589,3 +589,59 @@ class SondeDeSanteTests(TestCase):
         self.assertEqual(hotes[:2], ["192.168.1.20", "menu.exemple.fr"])
         self.assertIn("127.0.0.1", hotes)
         self.assertEqual(self.client.get("/sante/", HTTP_HOST="127.0.0.1:8000").status_code, 200)
+
+
+class CoursesRegroupeesTests(TestCase):
+    """Un ingrédient présent dans plusieurs lots ou pour plusieurs repas : une seule ligne."""
+
+    def setUp(self):
+        import datetime
+        from django.utils import timezone
+        self.auj = timezone.localdate()
+        j = lambda n: (self.auj + datetime.timedelta(days=n)).isoformat()  # noqa: E731
+        plan = copy.deepcopy(PLAN)
+        plan["listes"] = [
+            {"label": "Lot 1", "shop": j(0), "range": "", "shops": {"primeur": [{"c": "Légumes", "items": [
+                ["Carottes", "2,5 kg", "", 0, 0, 0, j(1)], ["Citron jaune", "1", "", 0, 0, 0, j(2)],
+                ["Coriandre", "1 bouquet", "", 0, 0, 0, j(2)]]}]}},
+            {"label": "Lot 2", "shop": j(4), "range": "", "shops": {"primeur": [{"c": "Légumes", "items": [
+                ["Carottes", "2,3 kg", "", 0, 0, 0, j(5)], ["Citrons jaunes", "2", "", 0, 0, 0, j(6)],
+                ["Coriandre", "1 bouquet", "", 0, 0, 0, j(20)]]}]}},
+        ]
+        importer_plan(plan)
+        self.client.force_login(User.objects.create_user("parent1", password="motdepasse-test"))
+
+    def test_une_ligne_par_ingredient_avec_total_et_dates(self):
+        from .courses import liste_globale
+        donnees = liste_globale("primeur", 7, self.auj)
+        lignes = {l["nom"]: l for l in donnees["lignes"]}
+        self.assertEqual(lignes["Carottes"]["quantite"], "4,8 kg")
+        self.assertTrue(lignes["Carottes"]["quand"].startswith("2 fois : demain, "))
+        self.assertEqual(len(lignes["Carottes"]["articles"]), 2)
+        self.assertEqual(lignes["Citron jaune"]["quantite"], "3")          # « Citron jaune » + « Citrons jaunes »
+        self.assertEqual(lignes["Coriandre"]["quantite"], "1 bouquet")     # le 2e bouquet est dans 20 jours
+        self.assertEqual([l["nom"] for l in donnees["plus_tard"]], ["Coriandre"])
+        self.assertEqual(donnees["a_acheter"]["primeur"], 3)
+
+    def test_cocher_la_ligne_coche_tous_ses_articles(self):
+        r = self.client.get("/courses/?magasin=primeur&jours=7").content.decode()
+        self.assertEqual(r.count('class="item'), 3)
+        etat = self.client.get("/courses/etat/").json()["articles"]
+        carottes = [i for i, a in etat.items() if a["k"] == "primeur|carotte"]
+        self.assertEqual(len(carottes), 2)
+        for i in carottes:
+            self.client.post(f"/article/{i}/cocher/", data=json.dumps({"coche": True}), content_type="application/json")
+        r = self.client.get("/courses/?magasin=primeur&jours=7").content.decode()
+        self.assertIn("Déjà acheté (1)", r)
+
+    def test_additions_de_quantites(self):
+        from .courses import additionner
+        self.assertEqual(additionner(["625 g", "400 g"]), "1,02 kg")
+        self.assertEqual(additionner(["300 g", "2 kg"]), "2,3 kg")
+        self.assertEqual(additionner(["15", "13"]), "28")
+        self.assertEqual(additionner(["1 bouquet", "1 bouquet"]), "2 bouquets")
+        self.assertEqual(additionner(["4 tranches", "3 tranches"]), "7 tranches")
+        self.assertEqual(additionner(["20 cl", "1 l"]), "1,2 l")
+        self.assertEqual(additionner(["2", "1 bouquet"]), "2 + 1 bouquet")
+        self.assertEqual(additionner(["½", "1"]), "1½")
+        self.assertEqual(additionner(["2 cm", "3 cm"]), "5 cm")
