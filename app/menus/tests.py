@@ -645,3 +645,32 @@ class CoursesRegroupeesTests(TestCase):
         self.assertEqual(additionner(["2", "1 bouquet"]), "2 + 1 bouquet")
         self.assertEqual(additionner(["½", "1"]), "1½")
         self.assertEqual(additionner(["2 cm", "3 cm"]), "5 cm")
+
+
+
+class TotalAssietteTests(TestCase):
+    def test_total_des_lignes_en_grammes(self):
+        from .templatetags.menus_extras import total_assiette
+        self.assertEqual(total_assiette([["Porc et légumes", "330 g", "410 g", "140 g", "100 g"],
+                                         ["Nouilles cuites", "130 g", "160 g", "130 g", "90 g"]]),
+                         ["460 g", "570 g", "270 g", "190 g"])
+        # une seule ligne, ou des parts non pesables : pas de total
+        self.assertIsNone(total_assiette([["Curry", "330 g", "410 g", "140 g", "100 g"]]))
+        self.assertIsNone(total_assiette([["Galettes", "2", "3", "2", "1"], ["Salade", "50 g", "50 g", "30 g", "20 g"]]))
+        # les lignes « cru » et « Boîte de demain » ne sont pas dans l'assiette
+        self.assertEqual(total_assiette([["Porc cru", "120 g", "150 g", "70 g", "45 g"],
+                                         ["Porc cuit", "90 g", "110 g", "50 g", "35 g"],
+                                         ["Riz cuit", "130 g", "160 g", "130 g", "90 g"],
+                                         ["Boîte de demain : porc cuit", "90 g", "110 g", "", ""]]),
+                         ["220 g", "270 g", "180 g", "125 g"])
+        self.assertEqual(total_assiette([["Salade", "50 %", "50 %", "cantine", "cantine"], ["Œuf", "1", "2", "", ""]]), None)
+
+    def test_affiche_dans_la_recette_pas_au_petit_dej(self):
+        plan = copy.deepcopy(PLAN)
+        plan["recettes"]["curry"]["por"].append(["Riz cuit", "130 g", "160 g", "130 g", "90 g"])
+        importer_plan(plan)
+        self.client.force_login(User.objects.create_user("parent1", password="motdepasse-test"))
+        r = self.client.get("/jour/2026-11-16/").content.decode()
+        self.assertIn('<tr class="ligne-total"><th>Total assiette</th><td data-p="0">460 g</td>', r)
+        self.assertIn("J'ai pesé le plat cuit", r)
+        self.assertNotIn("ligne-total", self.client.get("/petit-dej/").content.decode())

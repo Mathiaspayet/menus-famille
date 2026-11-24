@@ -53,7 +53,7 @@
     const table = body.querySelector("table.portions");
     if (!table) return 1;
     const plats = [], boites = [];
-    table.querySelectorAll("tbody tr").forEach(tr => {
+    table.querySelectorAll("tbody tr:not(.ligne-total)").forEach(tr => {
       const valeurs = Array.from(tr.querySelectorAll("td[data-p]")).map(td => lire(td.textContent));
       const chiffres = valeurs.filter(Boolean);
       if (valeurs.includes(false) || !chiffres.length || chiffres.some(v => v.u !== chiffres[0].u)) return;
@@ -138,6 +138,55 @@
     if (estBoite(tr.querySelector("th").textContent)) tr.classList.add("ligne-boite");
   });
 
+  // --- « ⚖ J'ai pesé le plat cuit » : répartir le plat réel entre les assiettes ---
+  const arrondi5 = g => Math.max(5, Math.round(g / 5) * 5);
+  const enG = g => `${Math.round(g).toLocaleString("fr-FR")} g`;
+  function balance(details) {
+    const body = details.closest(".body");
+    const total = body.querySelector("tr.ligne-total");
+    if (!total) return;
+    const parts = Array.from(total.querySelectorAll("td[data-p]")).map(td => {
+      const v = lire(td.textContent);
+      return { i: +td.dataset.p, g: v && v.u === "g" ? v.n : 0 };
+    });
+    const assiettes = parts.filter(p => present(p.i) && p.g);
+    // Boîtes : lignes « Boîte de demain » en grammes, sinon les 2 plus grandes assiettes (les adultes).
+    let boites = [];
+    if (etat.boites) {
+      const lignesBoite = Array.from(body.querySelectorAll("tr.ligne-boite")).filter(tr => !/\bcrue?s?\b/i.test(tr.querySelector("th").textContent));
+      if (lignesBoite.length) {
+        const parPersonne = {};
+        lignesBoite.forEach(tr => tr.querySelectorAll("td[data-p]").forEach(td => {
+          const v = lire(td.textContent);
+          if (v && v.u === "g" && present(+td.dataset.p)) parPersonne[td.dataset.p] = (parPersonne[td.dataset.p] || 0) + v.n;
+        }));
+        boites = Object.entries(parPersonne).map(([i, g]) => ({ i: +i, g }));
+      } else if (details.dataset.boitesRecette) {
+        boites = [...parts].sort((a, b) => b.g - a.g).slice(0, 2).filter(p => present(p.i));
+      }
+    }
+    boites.sort((a, b) => a.i - b.i);
+    const prevu = [...assiettes, ...boites].reduce((s, p) => s + p.g, 0);
+    const nb = (n, mot) => `${n} ${mot}${n > 1 ? "s" : ""}`;
+    details.querySelector(".prevu").textContent =
+      `Prévu : ${enG(prevu)} pour ${nb(assiettes.length, "assiette")}${boites.length ? " et " + nb(boites.length, "boîte") : ""}.`;
+    const pese = parseFloat(details.querySelector("input").value);
+    const resultat = details.querySelector(".resultat");
+    resultat.hidden = !(pese > 0);
+    if (!(pese > 0)) return;
+    if (pese >= prevu - 30) {
+      const reste = pese - prevu;
+      resultat.textContent = "Servez les totaux du tableau." + (reste >= 50 ? ` Il restera environ ${enG(arrondi5(reste))} : au frigo.` : "");
+    } else {
+      const f = pese / prevu;
+      const liste = assiettes.map(p => `${noms[p.i]} ${enG(arrondi5(p.g * f))}`)
+        .concat(boites.map(p => `boîte de ${noms[p.i]} ${enG(arrondi5(p.g * f))}`));
+      resultat.textContent = `Plat plus léger que prévu (${Math.round((1 - f) * 100)} % de moins) : servez ${liste.join(" · ")}.`;
+    }
+  }
+  const balances = Array.from(document.querySelectorAll("details.balance"));
+  balances.forEach(d => d.querySelector("input").addEventListener("input", () => balance(d)));
+
   function resume() {
     const n = nbPersonnes - etat.absents.length;
     return `${n} personne${n > 1 ? "s" : ""}` + (etat.absents.length ? ` (sans ${etat.absents.map(i => noms[i]).join(", ")})` : "");
@@ -168,6 +217,8 @@
         note.textContent = `Quantités pour ${resume()}${body.dataset.boites ? (etat.boites ? ", boîtes de demain comprises" : ", sans les boîtes") : ""}. Les étapes gardent celles de la recette entière.`;
       }
     });
+
+    balances.forEach(balance);
 
     const modifie = etat.absents.length > 0 || !etat.boites;
     barre.classList.toggle("modifie", modifie);

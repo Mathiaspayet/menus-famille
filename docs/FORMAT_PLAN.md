@@ -37,6 +37,13 @@ même format**. Vous pouvez lui coller cette page pour qu'il connaisse les règl
 }
 ```
 
+Portions : **poids cuits, tels qu'ils arrivent dans l'assiette**. Quand le tableau a au
+moins deux lignes en grammes, l'appli ajoute une ligne « Total assiette » (à peser sur la
+balance) et un calculateur « ⚖ J'ai pesé le plat cuit » qui répartit le poids réel entre
+les assiettes et les boîtes. Pour un plat mélangé (sauté, curry avec ses nouilles…), une
+seule ligne avec le poids cuit total par personne suffit. Les lignes « … cru » ne comptent
+pas dans le total.
+
 Portions et « Pour 4 personnes » : sur la page du jour, on peut retirer une personne
 (ou les boîtes du lendemain). L'appli recalcule alors **tous les ingrédients** des
 recettes du jour : la part de chacun est lue dans le tableau des portions (ex. 330 g

@@ -1,7 +1,8 @@
 {% comment %}Tableau de portions : lignes = [aliment, part personne 1, part personne 2, ...]
 data-p = numéro de la personne (colonne) : portions.js s'en sert pour masquer
 les absents et calculer la colonne « Total ».{% endcomment %}
-<div class="tw"><table class="portions">
+{% load menus_extras %}<div class="tw"><table class="portions">
   <thead><tr><th></th>{% for p in personnes %}<th data-p="{{ forloop.counter0 }}">{{ p }}</th>{% endfor %}</tr></thead>
-  <tbody>{% for ligne in lignes %}<tr>{% for c in ligne %}{% if forloop.first %}<th>{{ c }}</th>{% else %}<td data-p="{{ forloop.counter0|add:'-1' }}">{{ c|default:"–" }}</td>{% endif %}{% endfor %}</tr>{% endfor %}</tbody>
+  <tbody>{% for ligne in lignes %}<tr>{% for c in ligne %}{% if forloop.first %}<th>{{ c }}</th>{% else %}<td data-p="{{ forloop.counter0|add:'-1' }}">{{ c|default:"–" }}</td>{% endif %}{% endfor %}</tr>{% endfor %}
+  {% if avec_total %}{% with tot=lignes|total_assiette %}{% if tot %}<tr class="ligne-total"><th>Total assiette</th>{% for c in tot %}<td data-p="{{ forloop.counter0 }}">{{ c }}</td>{% endfor %}</tr>{% endif %}{% endwith %}{% endif %}</tbody>
 </table></div>

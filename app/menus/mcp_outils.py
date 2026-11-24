@@ -365,7 +365,7 @@ _RECETTE = {"type": "object", "properties": {
     "titre": TEXTE, "duree": {"type": "string", "description": "Ex. 25 min"},
     "ingredients": LISTE_TEXTES, "etapes": LISTE_TEXTES,
     "portions": {"type": "array", "items": LISTE_TEXTES,
-                 "description": "Une ligne par aliment : [aliment, part de la 1re personne, part de la 2e, ...]. Valeurs simples (« 120 g », « 1 pavé », « ⅗ de pavé ») : l'appli s'en sert pour recalculer les ingrédients quand quelqu'un est absent. Ingrédients commençant par la quantité (« 625 g de poulet »). Parts des boîtes du lendemain éventuellement sur des lignes « Boîte de demain : porc cru »."},
+                 "description": "Une ligne par aliment SERVI : [aliment, part de la 1re personne, part de la 2e, ...], poids CUITS dans l'assiette. Valeurs simples (« 120 g », « 1 pavé ») : l'appli additionne les lignes en grammes (« Total assiette », à peser) et recalcule les ingrédients si quelqu'un est absent. Plat mélangé (sauté, curry avec ses nouilles…) : une seule ligne avec le poids cuit total par personne. Vérifier que la somme des assiettes (et des 2 boîtes s'il y en a) correspond au poids cuit que la recette produit. Ingrédients commençant par la quantité (« 625 g de poulet »)."},
     "dessert": TEXTE, "note": TEXTE, "feu": {"type": "string", "description": "Pot du feu (piment à table)"},
     "boites": {"type": "boolean", "description": "Cuisiner 2 parts de plus pour les boîtes du lendemain"},
     "boite_prep": {"type": "boolean", "description": "Recette de boîte préparée la veille"}},

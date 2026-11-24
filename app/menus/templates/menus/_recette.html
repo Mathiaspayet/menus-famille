@@ -2,8 +2,15 @@
   {% if r.duree and not duree_affichee or r.boites or r.feu %}<p class="meta">{% if r.duree and not duree_affichee %}<span>⏱ {{ r.duree }}</span>{% endif %}{% if r.boites %}<span class="box">+ 2 boîtes pour demain midi</span>{% endif %}{% if r.feu %}<span class="fire">🌶 {{ r.feu }} à table</span>{% endif %}</p>{% endif %}
   {% if r.portions %}
   <h4>Dans l'assiette</h4>
-  {% include "menus/_tableau.html" with lignes=r.portions %}
-  {% if r.boites %}<p class="note note-boites">Remplissez tout de suite les 2 boîtes avec les mêmes quantités que les assiettes des adultes.</p>{% endif %}
+  {% include "menus/_tableau.html" with lignes=r.portions avec_total=True %}
+  {% load menus_extras %}{% if r.portions|total_assiette %}
+  <p class="note">Assiette vide sur la balance, remise à zéro : servez jusqu'au <b>total</b>{% if r.boites %} (les 2 boîtes : comme les assiettes des adultes){% endif %}.</p>
+  <details class="balance" data-boites-recette="{{ r.boites|yesno:'1,' }}"><summary>⚖ J'ai pesé le plat cuit</summary>
+    <p class="prevu"></p>
+    <label class="pesee">Poids du plat cuit, sans le récipient : <input type="number" inputmode="numeric" min="0" step="10" placeholder="ex. 2200"> g</label>
+    <p class="resultat" hidden></p>
+  </details>
+  {% elif r.boites %}<p class="note note-boites">Remplissez tout de suite les 2 boîtes avec les mêmes quantités que les assiettes des adultes.</p>{% endif %}
   {% endif %}
   <div class="recette-colonnes">
     <section><h4>Ingrédients</h4>
