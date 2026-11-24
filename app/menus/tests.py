@@ -83,6 +83,7 @@ class EcransTests(TestCase):
         for url in ["/jour/2026-11-16/", "/jour/2026-11-17/", "/petit-dej/", "/courses/", "/frigo/", "/infos/"]:
             self.assertEqual(self.client.get(url).status_code, 200, url)
         self.assertContains(self.client.get("/jour/2026-11-16/"), "Curry de poulet")
+        self.assertNotContains(self.client.get("/jour/2026-11-17/"), "Sortir le poisson")  # « À faire » retiré
         self.assertEqual(self.client.get("/jour/pas-une-date/").status_code, 404)
 
     def test_qui_mange_sur_la_page_du_jour(self):

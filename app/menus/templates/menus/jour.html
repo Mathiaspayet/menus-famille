@@ -16,8 +16,6 @@
   {% for d in jours %}<a href="{% url 'jour' d.date|date:'Y-m-d' %}" class="{% if d.date == j.date %}on{% endif %}{% if d.nouvelle_semaine %} sem{% endif %}{% if d.date == aujourdhui %} auj{% endif %}"{% if d.date == j.date %} aria-current="date"{% endif %}><span>{{ d.date|date:'D'|slice:':3' }}</span><b>{{ d.date|date:'j' }}</b></a>{% endfor %}
 </nav>
 
-{% if j.a_faire %}<div class="todo"><b>À faire</b><ul>{% for t in j.a_faire %}<li>{{ t }}</li>{% endfor %}</ul></div>{% endif %}
-
 {% if j.remarque %}<div class="remarque" data-replier><p>{{ j.remarque|linebreaksbr }}</p></div>{% endif %}
 
 {% if personnes %}
